@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package dslVersion="1.0.0.0" 
+        Id="ead56b95-24fe-4187-93e8-b37d605eae33" 
+        solutionId="ead56b95-24fe-4187-93e8-b37d605eae33" 
+        xmlns="http://schemas.microsoft.com/VisualStudio/2008/SharePointTools/PackageModel" 
+        name="Test.Activities.Automation.WCFService"
+        sharePointProductVersion="16.0">
+</package>
