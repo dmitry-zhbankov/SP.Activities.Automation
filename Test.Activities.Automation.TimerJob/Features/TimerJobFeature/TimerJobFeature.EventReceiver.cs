@@ -13,16 +13,17 @@ namespace Test.Activities.Automation.TimerJob.Features.TimerJobFeature
     /// The GUID attached to this class may be used during packaging and should not be modified.
     /// </remarks>
 
-    [Guid("deecb8fe-262e-422a-924c-dbc5703d7381")]
+    [Guid("353e1448-874f-405e-af35-3a78c37e98af")]
     public class TimerJobFeatureEventReceiver : SPFeatureReceiver
     {
+        const string docJobName = "Test.Activities.Automation.Job";
+
         // Uncomment the method below to handle the event raised after a feature has been activated.
 
-        const string docJobName = "Test.Activities.Automation.Job";
-        
         public override void FeatureActivated(SPFeatureReceiverProperties properties)
         {
-            var webApp=properties.Feature.Parent as SPWebApplication;
+            var webApp = properties.Feature.Parent as SPWebApplication;
+
             foreach (var job in webApp.JobDefinitions)
             {
                 if (job.Name == docJobName)
@@ -32,19 +33,16 @@ namespace Test.Activities.Automation.TimerJob.Features.TimerJobFeature
             var docJob = new TimerJob(docJobName, webApp,
                 SPServer.Local, SPJobLockType.Job);
 
-            var schedule = new SPMinuteSchedule {BeginSecond = 0, EndSecond = 59, Interval = 1};
+            var schedule = new SPMinuteSchedule { BeginSecond = 0, EndSecond = 10, Interval = 1 };
             docJob.Schedule = schedule;
             docJob.Update();
         }
-
 
         // Uncomment the method below to handle the event raised before a feature is deactivated.
 
         public override void FeatureDeactivating(SPFeatureReceiverProperties properties)
         {
             var site = properties.Feature.Parent as SPWebApplication;
-
-            
 
             foreach (var job in site.JobDefinitions)
             {

@@ -19,7 +19,7 @@ namespace Test.Activities.Automation.TimerJob
 
         public override void Execute(Guid targetInstanceId)
         {
-            //base.Execute(targetInstanceId);
+            Console.WriteLine();
         }
     }
 }
