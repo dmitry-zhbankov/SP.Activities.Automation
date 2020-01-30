@@ -10,7 +10,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.Serialization.Json;
 using Test.Activities.Automation.ActivityLib;
-using Test.Activities.Automation.TimerJob.Constants;
+
 
 namespace Test.Activities.Automation.TimerJob
 {
@@ -26,6 +26,29 @@ namespace Test.Activities.Automation.TimerJob
 
         public override void Execute(Guid targetInstanceId)
         {
+            //get from config
+
+            var repositories = new List<Repository>()
+            {
+                new Repository()
+                {
+                    Uri= new Uri(@"https://gitlab.itechart-group.com/d6.edu/test-project"),
+                    Activity = "Development 1"
+                }
+            };
+
+            //get from gitLab
+            using (var gitClient = new HttpClient())
+            {
+                foreach (var rep in repositories)
+                {
+                    var url =
+                        $"{rep.Uri.Host}/{Constants.GitLab.Api}/{rep.Uri.Segments.Last()}/{Constants.GitLab.Commits}";
+                    var resp = gitClient.GetAsync(url);
+                }
+            }
+
+
             var serializer = new DataContractJsonSerializer(typeof(ActivityInfo[]));
             var ms = new MemoryStream();
             serializer.WriteObject(ms, new[]
@@ -39,7 +62,7 @@ namespace Test.Activities.Automation.TimerJob
                 new ActivityInfo
                 {
                     UserId = 2,
-                    Activity = "Mentoring",
+                    Activity = Constants.Activities.Mentoring,
                     Date = DateTime.Now
                 },
             });
@@ -48,14 +71,14 @@ namespace Test.Activities.Automation.TimerJob
             var reader = new StreamReader(ms);
             var str = reader.ReadToEnd();
 
-            var handler = new HttpClientHandler()
+            var handler = new HttpClientHandler
             {
                 UseDefaultCredentials = true,
             };
             var client = new HttpClient(handler);
-            
-            var content=new StringContent(str,Encoding.UTF8,@"application/json");
-            var uri=new Uri(TimerJobConstants.ServiceUrl);
+
+            var content = new StringContent(str, Encoding.UTF8, @"application/json");
+            var uri = new Uri(Constants.ServiceUrl);
 
             var res = client.PostAsync(uri, content).Result;
         }
