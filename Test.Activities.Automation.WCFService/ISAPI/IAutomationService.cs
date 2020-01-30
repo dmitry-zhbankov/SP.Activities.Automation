@@ -4,6 +4,7 @@ using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.Text;
 using System.Threading.Tasks;
+using Test.Activities.Automation.ActivityLib;
 
 namespace Test.Activities.Automation.WCFService
 {
@@ -16,6 +17,6 @@ namespace Test.Activities.Automation.WCFService
             ResponseFormat = WebMessageFormat.Json,
             BodyStyle = WebMessageBodyStyle.Bare
             )]
-        bool FillActivities(object[] activities);
+        bool FillActivities(ActivityInfo[] activities);
     }
 }

@@ -47,12 +47,17 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Microsoft.SharePoint" />
     <Reference Include="Microsoft.SharePoint.Client.ServerRuntime" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Constants\TimerJobConstants.cs" />
     <Compile Include="Features\TimerJobFeature\TimerJobFeature.EventReceiver.cs">
       <DependentUpon>TimerJobFeature.feature</DependentUpon>
     </Compile>
@@ -71,11 +76,16 @@
       <DependentUpon>Package.package</DependentUpon>
     </None>
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <Content Include="Features\TimerJobFeature\TimerJobFeature.Template.xml">
       <DependentUpon>TimerJobFeature.feature</DependentUpon>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Test.Activities.Automation.ActivityLib\Test.Activities.Automation.ActivityLib.csproj">
+      <Project>{817CC7B1-D06D-4BD6-B6F3-CBF1A40D55E1}</Project>
+      <Name>Test.Activities.Automation.ActivityLib</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

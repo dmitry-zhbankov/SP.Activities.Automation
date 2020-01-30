@@ -57,8 +57,6 @@
     <Reference Include="Microsoft.SharePoint.Client.ServerRuntime" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ISAPI\ActivityCollection.cs" />
-    <Compile Include="ISAPI\ActivityInfo.cs" />
     <Compile Include="ISAPI\AutomationService.svc.cs">
       <DependentUpon>AutomationService.svc</DependentUpon>
     </Compile>
@@ -80,6 +78,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Features\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Test.Activities.Automation.ActivityLib\Test.Activities.Automation.ActivityLib.csproj">
+      <Project>{817CC7B1-D06D-4BD6-B6F3-CBF1A40D55E1}</Project>
+      <Name>Test.Activities.Automation.ActivityLib</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
