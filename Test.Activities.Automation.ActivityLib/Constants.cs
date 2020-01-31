@@ -31,7 +31,8 @@ namespace Test.Activities.Automation.ActivityLib
         public static class GitLab
         {
             public const string Api = "api/v4/projects";
-            public const string Commits = "repository/commits";
+            public const string CommitsSince = "repository/commits?since=";
+            public const string PrivateToken = "your private key";
         }
     }
 }

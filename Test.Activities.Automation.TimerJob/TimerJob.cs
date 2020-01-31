@@ -26,32 +26,16 @@ namespace Test.Activities.Automation.TimerJob
 
         public override void Execute(Guid targetInstanceId)
         {
-            //get from config
+            var devActivities= GetDevActivities();
 
-            var repositories = new List<Repository>()
-            {
-                new Repository()
-                {
-                    Uri= new Uri(@"https://gitlab.itechart-group.com/d6.edu/test-project"),
-                    Activity = "Development 1"
-                }
-            };
+            var mentoringActivities= GetMentoringActivities();
 
-            //get from gitLab
-            using (var gitClient = new HttpClient())
-            {
-                foreach (var rep in repositories)
-                {
-                    var url =
-                        $"{rep.Uri.Host}/{Constants.GitLab.Api}/{rep.Uri.Segments.Last()}/{Constants.GitLab.Commits}";
-                    var resp = gitClient.GetAsync(url);
-                }
-            }
+            SendActivities(devActivities.Concat(mentoringActivities));
+        }
 
-
-            var serializer = new DataContractJsonSerializer(typeof(ActivityInfo[]));
-            var ms = new MemoryStream();
-            serializer.WriteObject(ms, new[]
+        private void SendActivities(IEnumerable<ActivityInfo> activities)
+        {
+            activities = new List<ActivityInfo>()
             {
                 new ActivityInfo
                 {
@@ -64,23 +48,89 @@ namespace Test.Activities.Automation.TimerJob
                     UserId = 2,
                     Activity = Constants.Activities.Mentoring,
                     Date = DateTime.Now
-                },
-            });
+                }
+            };
+            
+            var serializer = new DataContractJsonSerializer(typeof(ActivityInfo[]));
+            var ms = new MemoryStream();
+            serializer.WriteObject(ms, activities);
 
             ms.Position = 0;
             var reader = new StreamReader(ms);
             var str = reader.ReadToEnd();
 
-            var handler = new HttpClientHandler
+            var svcHandler = new HttpClientHandler
             {
                 UseDefaultCredentials = true,
             };
-            var client = new HttpClient(handler);
+            var svcClient = new HttpClient(svcHandler);
 
             var content = new StringContent(str, Encoding.UTF8, @"application/json");
             var uri = new Uri(Constants.ServiceUrl);
 
-            var res = client.PostAsync(uri, content).Result;
+            var res = svcClient.PostAsync(uri, content).Result;
+        }
+
+        private IEnumerable<ActivityInfo> GetMentoringActivities()
+        {
+            var activities=new List<ActivityInfo>();
+
+            return activities;
+        }
+
+        private IEnumerable<ActivityInfo> GetDevActivities()
+        {
+            var activities=new List<ActivityInfo>();
+            
+            var repositories = GetConfigRepositories();
+
+            var commits = GetGitLabCommits(repositories);
+
+            return activities;
+        }
+
+        private IEnumerable<Commit> GetGitLabCommits(IEnumerable<Repository>repositories)
+        {
+            Commit[] commits = null;
+
+            using (var handler = new HttpClientHandler())
+            {
+                using (var gitClient = new HttpClient(handler))
+                {
+                    gitClient.DefaultRequestHeaders.Add("Private-Token", Constants.GitLab.PrivateToken);
+                    gitClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                    var jsonCommitSerializer = new DataContractJsonSerializer(typeof(Commit[]));
+
+                    foreach (var rep in repositories)
+                    {
+                        var url =
+                            $"{rep.Host}{Constants.GitLab.Api}/{rep.ProjectId}/{Constants.GitLab.CommitsSince}{DateTime.Now.AddDays(-1).Date:yyyy-MM-dd}";
+                        var resp = gitClient.GetAsync(url).Result;
+                        var stream = resp.Content.ReadAsStreamAsync().Result;
+                        stream.Position = 0;
+                        var commitsReader = new StreamReader(stream);
+                        var strCommits = commitsReader.ReadToEnd();
+                        stream.Position = 0;
+                        commits = jsonCommitSerializer.ReadObject(stream) as Commit[];
+                    }
+                }
+            }
+            return commits;
+        }
+
+        private IEnumerable<Repository> GetConfigRepositories()
+        {
+            var list = new List<Repository>()
+            {
+                new Repository()
+                {
+                    Host= "https://gitlab.itechart-group.com/",
+                    Activity = "Development 1",
+                    ProjectId="539",
+                }
+            };
+            return list;
         }
     }
 }
