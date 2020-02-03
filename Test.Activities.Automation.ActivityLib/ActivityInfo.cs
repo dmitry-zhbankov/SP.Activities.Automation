@@ -11,7 +11,7 @@ namespace Test.Activities.Automation.ActivityLib
     public class ActivityInfo
     {
         [DataMember]
-        public int UserId { get; set; }
+        public string UserEmail { get; set; }
 
         [DataMember]
         public DateTime Date { get; set; }

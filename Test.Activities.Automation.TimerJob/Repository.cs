@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Runtime.Serialization;
+using System.Collections.Generic;
 
 namespace Test.Activities.Automation.TimerJob
 {
@@ -10,13 +10,7 @@ namespace Test.Activities.Automation.TimerJob
         public string Activity { get; set; }
 
         public string ProjectId { get; set; }
-    }
 
-    [DataContract]
-    public class Commit
-    {
-        [DataMember(Name = "author_email")]
-        public string AuthorEmail { get; set; }
+        public List<Branch> Branches { get; set; }=new List<Branch>();
     }
-
 }

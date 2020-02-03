@@ -351,3 +351,4 @@ MigrationBackup/
 .ionide/
 /ProjectProvisioningTask/key.snk
 /Test.Activities.Automation.ActivityLib/token.txt
+/Test.Activities.Automation.ActivityLib/Properties/Resources.resx

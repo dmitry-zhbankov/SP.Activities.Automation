@@ -57,6 +57,8 @@
     <Reference Include="Microsoft.SharePoint.Client.ServerRuntime" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Branch.cs" />
+    <Compile Include="Commit.cs" />
     <Compile Include="Features\TimerJobFeature\TimerJobFeature.EventReceiver.cs">
       <DependentUpon>TimerJobFeature.feature</DependentUpon>
     </Compile>

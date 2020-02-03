@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -9,6 +10,7 @@ using Microsoft.SharePoint.Administration;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.Serialization.Json;
+using Microsoft.SharePoint;
 using Test.Activities.Automation.ActivityLib;
 
 
@@ -26,9 +28,9 @@ namespace Test.Activities.Automation.TimerJob
 
         public override void Execute(Guid targetInstanceId)
         {
-            var devActivities= GetDevActivities();
+            var devActivities = GetDevActivities();
 
-            var mentoringActivities= GetMentoringActivities();
+            var mentoringActivities = GetMentoringActivities();
 
             SendActivities(devActivities.Concat(mentoringActivities));
         }
@@ -39,18 +41,18 @@ namespace Test.Activities.Automation.TimerJob
             {
                 new ActivityInfo
                 {
-                    UserId = 1,
+                    UserEmail = "1@com",
                     Activity = "Development",
                     Date = DateTime.Now
                 },
                 new ActivityInfo
                 {
-                    UserId = 2,
+                    UserEmail = "2@com",
                     Activity = Constants.Activities.Mentoring,
                     Date = DateTime.Now
                 }
             };
-            
+
             var serializer = new DataContractJsonSerializer(typeof(ActivityInfo[]));
             var ms = new MemoryStream();
             serializer.WriteObject(ms, activities);
@@ -65,7 +67,7 @@ namespace Test.Activities.Automation.TimerJob
             };
             var svcClient = new HttpClient(svcHandler);
 
-            var content = new StringContent(str, Encoding.UTF8, @"application/json");
+            var content = new StringContent(str, Encoding.UTF8, Constants.HttpHeader.MediaType.ApplicatonJson);
             var uri = new Uri(Constants.ServiceUrl);
 
             var res = svcClient.PostAsync(uri, content).Result;
@@ -73,64 +75,88 @@ namespace Test.Activities.Automation.TimerJob
 
         private IEnumerable<ActivityInfo> GetMentoringActivities()
         {
-            var activities=new List<ActivityInfo>();
+            var activities = new List<ActivityInfo>();
 
             return activities;
         }
 
         private IEnumerable<ActivityInfo> GetDevActivities()
         {
-            var activities=new List<ActivityInfo>();
-            
+            var activities = new List<ActivityInfo>();
+
             var repositories = GetConfigRepositories();
 
-            var commits = GetGitLabCommits(repositories);
+            GetGitLabCommits(repositories);
 
             return activities;
         }
 
-        private IEnumerable<Commit> GetGitLabCommits(IEnumerable<Repository>repositories)
+        private void GetGitLabCommits(IEnumerable<Repository> repositories)
         {
-            Commit[] commits = null;
-
             using (var handler = new HttpClientHandler())
+            using (var client = new HttpClient(handler))
             {
-                using (var gitClient = new HttpClient(handler))
+                client.DefaultRequestHeaders.Add(Constants.GitLab.PrivateToken, Constants.GitLab.Token);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(Constants.HttpHeader.MediaType.ApplicatonJson));
+
+                var jsonSerializer = new DataContractJsonSerializer(typeof(Commit[]));
+
+                foreach (var repo in repositories)
                 {
-                    gitClient.DefaultRequestHeaders.Add("Private-Token", Constants.GitLab.PrivateToken);
-                    gitClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    var branchUrl =
+                        $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Branches}";
+                    var branchResponse = client.GetAsync(branchUrl).Result;
+                    var stream = branchResponse.Content.ReadAsStreamAsync().Result;
+                    stream.Position = 0;
+                    var reader = new StreamReader(stream);
+                    var strCommits = reader.ReadToEnd();
+                    stream.Position = 0;
 
-                    var jsonCommitSerializer = new DataContractJsonSerializer(typeof(Commit[]));
-
-                    foreach (var rep in repositories)
+                    var branches = jsonSerializer.ReadObject(stream) as Branch[];
+                    if (branches == null)
                     {
-                        var url =
-                            $"{rep.Host}{Constants.GitLab.Api}/{rep.ProjectId}/{Constants.GitLab.CommitsSince}{DateTime.Now.AddDays(-1).Date:yyyy-MM-dd}";
-                        var resp = gitClient.GetAsync(url).Result;
-                        var stream = resp.Content.ReadAsStreamAsync().Result;
-                        stream.Position = 0;
-                        var commitsReader = new StreamReader(stream);
-                        var strCommits = commitsReader.ReadToEnd();
-                        stream.Position = 0;
-                        commits = jsonCommitSerializer.ReadObject(stream) as Commit[];
+                        continue;
                     }
+
+                    foreach (var branch in branches)
+                    {
+                        var commitUrl =
+                            $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.CommitsSince}{DateTime.Now.AddDays(-7).Date:O}";
+                        var commitResponse = client.GetAsync(commitUrl).Result;
+                        stream.SetLength(0);
+                        stream = commitResponse.Content.ReadAsStreamAsync().Result;
+                        stream.Position = 0;
+
+                        var commits = jsonSerializer.ReadObject(stream) as Commit[];
+                        if (commits == null)
+                        {
+                            continue;
+                        }
+
+                        branch.Commits.AddRange(commits);
+                        repo.Branches.Add(branch);
+                    }
+
                 }
             }
-            return commits;
         }
 
         private IEnumerable<Repository> GetConfigRepositories()
         {
-            var list = new List<Repository>()
+            SPListItemCollection configItems;
+
+            using (var site = new SPSite(Constants.Host))
+            using (var web = site.OpenWeb(Constants.Web))
             {
-                new Repository()
-                {
-                    Host= "https://gitlab.itechart-group.com/",
-                    Activity = "Development 1",
-                    ProjectId="539",
-                }
-            };
-            return list;
+                var configList = web.Lists.TryGetList(Constants.Lists.Configurations);
+                configItems = configList?.GetItems();
+            }
+
+            return (configItems?.Cast<SPListItem>()
+                .Where(item => item[Constants.Configuration.Key] as string == Constants.Configuration.ConfigurationKeys.GitLabRepository)
+                .Select(item => item[Constants.Configuration.Value] as string)
+                .Select(value => value?.Split(new[] { Constants.Configuration.Separator }, StringSplitOptions.RemoveEmptyEntries))
+                .Select(str => new Repository() { Host = str?[0], ProjectId = str?[1], Activity = str?[2] }))?.ToList();
         }
     }
 }
