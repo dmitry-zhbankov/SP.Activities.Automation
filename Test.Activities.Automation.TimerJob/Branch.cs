@@ -9,6 +9,6 @@ namespace Test.Activities.Automation.TimerJob
         [DataMember(Name = "name")]
         public string Name { get; set; }
 
-        public List<Commit> Commits { get; set; }=new List<Commit>();
+        public List<Commit> Commits { get; set; }
     }
 }

@@ -11,6 +11,6 @@ namespace Test.Activities.Automation.TimerJob
 
         public string ProjectId { get; set; }
 
-        public List<Branch> Branches { get; set; }=new List<Branch>();
+        public List<Branch> Branches { get; set; }
     }
 }

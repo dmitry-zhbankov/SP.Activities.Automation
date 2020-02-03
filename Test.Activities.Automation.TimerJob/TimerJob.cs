@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.SharePoint.Administration;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using Microsoft.SharePoint;
 using Test.Activities.Automation.ActivityLib;
@@ -32,28 +34,12 @@ namespace Test.Activities.Automation.TimerJob
 
             var mentoringActivities = GetMentoringActivities();
 
-            SendActivities(devActivities.Concat(mentoringActivities));
+            SendActivities(devActivities.Concat(mentoringActivities).ToList());
         }
 
         private void SendActivities(IEnumerable<ActivityInfo> activities)
         {
-            activities = new List<ActivityInfo>()
-            {
-                new ActivityInfo
-                {
-                    UserEmail = "1@com",
-                    Activity = "Development",
-                    Date = DateTime.Now
-                },
-                new ActivityInfo
-                {
-                    UserEmail = "2@com",
-                    Activity = Constants.Activities.Mentoring,
-                    Date = DateTime.Now
-                }
-            };
-
-            var serializer = new DataContractJsonSerializer(typeof(ActivityInfo[]));
+            var serializer = new DataContractJsonSerializer(typeof(List<ActivityInfo>));
             var ms = new MemoryStream();
             serializer.WriteObject(ms, activities);
 
@@ -82,13 +68,25 @@ namespace Test.Activities.Automation.TimerJob
 
         private IEnumerable<ActivityInfo> GetDevActivities()
         {
-            var activities = new List<ActivityInfo>();
-
             var repositories = GetConfigRepositories();
 
             GetGitLabCommits(repositories);
 
-            return activities;
+            return CreateRepoActivities(repositories);
+        }
+
+        private IEnumerable<ActivityInfo> CreateRepoActivities(IEnumerable<Repository> repositories)
+        {
+            var activities = new List<ActivityInfo>();
+            foreach (var repo in repositories)
+            {
+                foreach (var branch in repo.Branches)
+                {
+                    activities.AddRange(branch.Commits.Select(commit => new ActivityInfo {Activity = repo.Activity, Date = DateTime.Parse(commit.Date), UserEmail = commit.AuthorEmail}));
+                }
+            }
+
+            return activities.GroupBy(x => x.UserEmail).Select(x => x.First());
         }
 
         private void GetGitLabCommits(IEnumerable<Repository> repositories)
@@ -99,46 +97,67 @@ namespace Test.Activities.Automation.TimerJob
                 client.DefaultRequestHeaders.Add(Constants.GitLab.PrivateToken, Constants.GitLab.Token);
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(Constants.HttpHeader.MediaType.ApplicatonJson));
 
-                var jsonSerializer = new DataContractJsonSerializer(typeof(Commit[]));
-
                 foreach (var repo in repositories)
                 {
                     var branchUrl =
                         $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Branches}";
                     var branchResponse = client.GetAsync(branchUrl).Result;
-                    var stream = branchResponse.Content.ReadAsStreamAsync().Result;
-                    stream.Position = 0;
-                    var reader = new StreamReader(stream);
-                    var strCommits = reader.ReadToEnd();
-                    stream.Position = 0;
 
-                    var branches = jsonSerializer.ReadObject(stream) as Branch[];
+
+                    var branches = JsonDeserialize<Branch[]>(branchResponse, branchUrl);
+
                     if (branches == null)
                     {
-                        continue;
-                    }
-
-                    foreach (var branch in branches)
-                    {
-                        var commitUrl =
-                            $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.CommitsSince}{DateTime.Now.AddDays(-7).Date:O}";
-                        var commitResponse = client.GetAsync(commitUrl).Result;
-                        stream.SetLength(0);
-                        stream = commitResponse.Content.ReadAsStreamAsync().Result;
-                        stream.Position = 0;
-
-                        var commits = jsonSerializer.ReadObject(stream) as Commit[];
-                        if (commits == null)
+                        var br = JsonDeserialize<Branch>(branchResponse, branchUrl);
+                        if (br == null)
                         {
                             continue;
                         }
-
-                        branch.Commits.AddRange(commits);
-                        repo.Branches.Add(branch);
+                        branches=new[]
+                        {
+                            br
+                        };
                     }
 
+                    repo.Branches=new List<Branch>();
+
+                    foreach (var branch in branches)
+                    {
+                        branch.Commits=new List<Commit>();
+
+                        var commitUrl =
+                            $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Commits}/{branch.Name}{Constants.GitLab.Since}{DateTime.Now.AddDays(-1).Date:yyyy-MM-dd}";
+                        var commitResponse = client.GetAsync(commitUrl).Result;
+
+                        var commits = JsonDeserialize<Commit[]>(commitResponse, commitUrl);
+                        if (commits == null)
+                        {
+                            var commit = JsonDeserialize<Commit>(commitResponse, commitUrl);
+                            if (commit==null)
+                            {
+                                continue;
+                            }
+                            branch.Commits.Add(commit);
+                        }
+                        else
+                        {
+                            branch.Commits.AddRange(commits);
+                        }
+                        
+                        repo.Branches.Add(branch);
+                    }
                 }
             }
+        }
+
+        T JsonDeserialize<T>(HttpResponseMessage httpResponse, string url) where  T: class
+        {
+            var serializer = new DataContractJsonSerializer(typeof(T));
+
+            var stream = httpResponse.Content.ReadAsStreamAsync().Result;
+            stream.Position = 0;
+            var res = serializer.ReadObject(stream) as T;
+            return res;
         }
 
         private IEnumerable<Repository> GetConfigRepositories()
