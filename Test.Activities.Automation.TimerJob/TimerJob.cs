@@ -59,7 +59,7 @@ namespace Test.Activities.Automation.TimerJob
             for (int i = 0; i < 3; i++)
             {
                 var res = await svcClient.PostAsync(uri, content);
-                if (res.StatusCode==HttpStatusCode.OK)
+                if (res.StatusCode == HttpStatusCode.OK)
                 {
                     break;
                 }
@@ -91,7 +91,7 @@ namespace Test.Activities.Automation.TimerJob
             {
                 foreach (var branch in repo.Branches)
                 {
-                    activities.AddRange(branch.Commits.Select(commit => new ActivityInfo {Activity = repo.Activity, Date = DateTime.Parse(commit.Date), UserEmail = commit.AuthorEmail}));
+                    activities.AddRange(branch.Commits.Select(commit => new ActivityInfo { Activity = repo.Activity, Date = DateTime.Parse(commit.Date), UserEmail = commit.AuthorEmail }));
                 }
             }
 
@@ -117,7 +117,7 @@ namespace Test.Activities.Automation.TimerJob
                         branch.Commits = new List<Commit>(commits);
                     }
 
-                    repo.Branches=new List<Branch>(branches);
+                    repo.Branches = new List<Branch>(branches);
                 }
             }
         }
@@ -125,31 +125,35 @@ namespace Test.Activities.Automation.TimerJob
         private IEnumerable<Commit> GetBranchCommits(HttpClient client, Branch branch, Repository repo)
         {
             var url =
-                $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Commits}/{branch.Name}{Constants.GitLab.Since}{DateTime.Now.AddDays(-1).Date:yyyy-MM-dd}";
+                $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Commits}?{Constants.GitLab.Branch}{branch.Name}&{Constants.GitLab.Since}{DateTime.Now.AddDays(-1).Date:yyyy-MM-dd}&{Constants.GitLab.Until}{DateTime.Now.Date:yyyy-MM-dd}";
 
             return GetApiCollection<Commit>(url, client);
         }
 
 
-        private IEnumerable<T> GetApiCollection<T>(string url, HttpClient client)where  T: class
+        private IEnumerable<T> GetApiCollection<T>(string url, HttpClient client) where T : class
         {
             var response = client.GetAsync(url).Result;
+            var stream = response.Content.ReadAsStreamAsync().Result;
+            
+            var res = new List<T>();
 
-            var array = JsonDeserialize<T[]>(response);
-            if (array != null) return array;
-
-            var single = JsonDeserialize<T>(response);
-            if (single == null)
+            var reader = new StreamReader(stream);
+            stream.Position = 0;
+            
+            var ch = reader.Read();
+            if (ch == '[')
             {
-                return null;
+                var multiple = JsonDeserialize<T[]>(stream);
+                res.AddRange(multiple);
+                
+                return res;
             }
 
-            array = new[]
-            {
-                single
-            };
+            var single = JsonDeserialize<T>(stream);
+            res.Add(single);
 
-            return array;
+            return res;
         }
 
         private IEnumerable<Branch> GetBranches(HttpClient client, Repository repo)
@@ -157,15 +161,13 @@ namespace Test.Activities.Automation.TimerJob
             var url =
                 $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Branches}";
 
-            return GetApiCollection<Branch>(url,client);
+            return GetApiCollection<Branch>(url, client);
         }
 
-        T JsonDeserialize<T>(HttpResponseMessage httpResponse) where  T: class
+        T JsonDeserialize<T>(Stream stream) where T : class
         {
             var serializer = new DataContractJsonSerializer(typeof(T));
 
-            var stream = httpResponse.Content.ReadAsStreamAsync().Result;
-            
             stream.Position = 0;
             var res = serializer.ReadObject(stream) as T;
             return res;

@@ -40,7 +40,9 @@ namespace Test.Activities.Automation.ActivityLib
         public static class GitLab
         {
             public const string Api = "api/v4/projects";
-            public const string Since = "?since=";
+            public const string Since = "since=";
+            public const string Until = "until=";
+            public const string Branch = "ref_name=";
             public const string Commits = "repository/commits";
             public static readonly string Token = Properties.Resources.Token;
             public const string PrivateToken = "Private-Token";
