@@ -40,6 +40,7 @@ namespace Test.Activities.Automation.TimerJob
         private async void SendActivities(IEnumerable<ActivityInfo> activities)
         {
             var serializer = new DataContractJsonSerializer(typeof(List<ActivityInfo>));
+
             var ms = new MemoryStream();
             serializer.WriteObject(ms, activities);
 
@@ -71,6 +72,30 @@ namespace Test.Activities.Automation.TimerJob
         private IEnumerable<ActivityInfo> GetMentoringActivities()
         {
             var activities = new List<ActivityInfo>();
+
+            using (var site = new SPSite(Constants.Host))
+            using (var web = site.OpenWeb(Constants.Web))
+            {
+                var mentoringList = web.Lists.TryGetList(Constants.Lists.MentoringCalendar);
+                var eventsCollection = mentoringList?.GetItems();
+                var yesterday = DateTime.Now.AddDays(-1).Date;
+                var events = eventsCollection?.Cast<SPListItem>()
+                    .Where(x => (x[Constants.Calendar.StartTime] as DateTime?) <= yesterday)
+                    .Where(x => (x[Constants.Calendar.EndTime] as DateTime?) >= yesterday);
+                
+                foreach (var item in events)
+                {
+                    var userField = item.Fields.GetField(Constants.Calendar.Employee);
+                    var userFieldValue =
+                        userField?.GetFieldValue(item[Constants.Calendar.Employee].ToString()) as SPFieldUserValue;
+                    activities.Add(new ActivityInfo()
+                    {
+                        UserEmail=userFieldValue?.User.Email,
+                        Activity=Constants.Activities.Mentoring,
+                        Date=yesterday
+                    });
+                }
+            }
 
             return activities;
         }
@@ -135,18 +160,18 @@ namespace Test.Activities.Automation.TimerJob
         {
             var response = client.GetAsync(url).Result;
             var stream = response.Content.ReadAsStreamAsync().Result;
-            
+
             var res = new List<T>();
 
             var reader = new StreamReader(stream);
             stream.Position = 0;
-            
+
             var ch = reader.Read();
             if (ch == '[')
             {
                 var multiple = JsonDeserialize<T[]>(stream);
                 res.AddRange(multiple);
-                
+
                 return res;
             }
 

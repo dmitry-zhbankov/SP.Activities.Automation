@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -47,6 +48,13 @@ namespace Test.Activities.Automation.ActivityLib
             public static readonly string Token = Properties.Resources.Token;
             public const string PrivateToken = "Private-Token";
             public const string Branches = "repository/branches";
+        }
+
+        public static class Calendar
+        {
+            public const string StartTime = "Start Time";
+            public const string EndTime = "End Time";
+            public const string Employee = "Employee";
         }
 
         public static class HttpHeader
