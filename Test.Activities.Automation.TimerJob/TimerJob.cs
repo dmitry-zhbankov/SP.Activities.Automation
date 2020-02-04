@@ -91,13 +91,13 @@ namespace Test.Activities.Automation.TimerJob
                     activities.Add(new ActivityInfo()
                     {
                         UserEmail=userFieldValue?.User.Email,
-                        Activity=Constants.Activities.Mentoring,
+                        Activity=Constants.Activity.ActivityType.Mentoring,
                         Date=yesterday
                     });
                 }
             }
 
-            return activities;
+            return activities.GroupBy(x => x.UserEmail).Select(x => x.First());
         }
 
         private IEnumerable<ActivityInfo> GetDevActivities()

@@ -14,17 +14,26 @@ namespace Test.Activities.Automation.ActivityLib
         public const string Host = "http://localhost";
         public const string Web = "Projects";
 
-        public static class Activities
+        public static class Activity
         {
-            public const string Mentoring = "Mentoring";
-            public const string Development1 = "Development 1";
-            public const string Development2 = "Development 2";
+            public const string Year = "Year";
+            public const string Month = "Month";
+            public const string User = "User";
+            public const string Activities = "Activities";
+
+            public static class ActivityType
+            {
+                public const string Mentoring = "Mentoring";
+                public const string Development1 = "Development 1";
+                public const string Development2 = "Development 2";
+            }
         }
 
         public static class Lists
         {
             public const string MentoringCalendar = "MentoringCalendar";
             public const string Configurations = "Config";
+            public const string Activities = "Activities";
         }
 
         public static class Configuration

@@ -17,6 +17,6 @@ namespace Test.Activities.Automation.WCFService
             ResponseFormat = WebMessageFormat.Json,
             BodyStyle = WebMessageBodyStyle.Bare
             )]
-        bool FillActivities(ActivityInfo[] activities);
+        bool FillActivities(IEnumerable<ActivityInfo> activities);
     }
 }
