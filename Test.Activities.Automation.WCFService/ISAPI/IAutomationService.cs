@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.Text;
@@ -17,6 +18,6 @@ namespace Test.Activities.Automation.WCFService
             ResponseFormat = WebMessageFormat.Json,
             BodyStyle = WebMessageBodyStyle.Bare
             )]
-        bool FillActivities(IEnumerable<ActivityInfo> activities);
+        HttpStatusCode FillActivities(IEnumerable<ActivityInfo> activities);
     }
 }
