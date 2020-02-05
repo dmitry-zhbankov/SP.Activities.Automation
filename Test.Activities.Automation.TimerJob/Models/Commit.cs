@@ -1,7 +1,6 @@
-﻿using System;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 
-namespace Test.Activities.Automation.TimerJob
+namespace Test.Activities.Automation.TimerJob.Models
 {
     [DataContract]
     public class Commit

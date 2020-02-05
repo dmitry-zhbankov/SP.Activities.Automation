@@ -1,10 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.ServiceModel;
 using System.ServiceModel.Web;
-using System.Text;
-using System.Threading.Tasks;
 using Test.Activities.Automation.ActivityLib;
 
 namespace Test.Activities.Automation.WCFService
@@ -16,8 +13,7 @@ namespace Test.Activities.Automation.WCFService
         [WebInvoke(Method = "POST", UriTemplate = "FillActivities",
             RequestFormat = WebMessageFormat.Json,
             ResponseFormat = WebMessageFormat.Json,
-            BodyStyle = WebMessageBodyStyle.Bare
-            )]
+            BodyStyle = WebMessageBodyStyle.Bare)]
         HttpStatusCode FillActivities(IEnumerable<ActivityInfo> activities);
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace Test.Activities.Automation.TimerJob
+namespace Test.Activities.Automation.TimerJob.Models
 {
     [DataContract]
     public class Branch

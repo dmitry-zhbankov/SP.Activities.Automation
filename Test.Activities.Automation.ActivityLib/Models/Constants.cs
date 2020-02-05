@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Test.Activities.Automation.ActivityLib
+﻿namespace Test.Activities.Automation.ActivityLib
 {
     public static class Constants
     {
@@ -24,8 +16,8 @@ namespace Test.Activities.Automation.ActivityLib
             public static class ActivityType
             {
                 public const string Mentoring = "Mentoring";
-                public const string Development1 = "Development 1";
-                public const string Development2 = "Development 2";
+                public const string Development1 = "Development1";
+                public const string Development2 = "Development2";
             }
         }
 
@@ -41,6 +33,7 @@ namespace Test.Activities.Automation.ActivityLib
             public const string Key = "Key";
             public const string Value = "Value";
             public const string Separator = "@";
+
             public static class ConfigurationKeys
             {
                 public const string GitLabRepository = "GitLabRepo";
@@ -70,7 +63,7 @@ namespace Test.Activities.Automation.ActivityLib
         {
             public static class MediaType
             {
-                public const string ApplicatonJson = "application/json";
+                public const string ApplicationJson = "application/json";
             }
         }
 
@@ -78,6 +71,5 @@ namespace Test.Activities.Automation.ActivityLib
         {
             public const string DateFormat = "yyyy-MM-dd'T'HH:mm:ssZ";
         }
-
     }
 }

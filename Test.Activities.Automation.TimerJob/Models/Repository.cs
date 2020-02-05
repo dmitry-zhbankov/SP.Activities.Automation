@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Test.Activities.Automation.TimerJob
+namespace Test.Activities.Automation.TimerJob.Models
 {
     public class Repository
     {

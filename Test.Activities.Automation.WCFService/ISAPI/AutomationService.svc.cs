@@ -1,95 +1,96 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
-using System.Runtime.Serialization.Json;
 using System.ServiceModel.Activation;
 using Microsoft.SharePoint;
 using Test.Activities.Automation.ActivityLib;
+
+using Test.Activities.Automation.WCFService.Models;
 
 namespace Test.Activities.Automation.WCFService
 {
     [AspNetCompatibilityRequirements(RequirementsMode = AspNetCompatibilityRequirementsMode.Required)]
     public class AutomationService : IAutomationService
     {
+        private ILogger _logger;
+
+        public AutomationService()
+        {
+            _logger=new ULSLogger(GetType().FullName);
+        }
+        
         public HttpStatusCode FillActivities(IEnumerable<ActivityInfo> activities)
         {
-            HttpStatusCode statusCode;
+            _logger.LogInformation("Request received");
 
-            using (var site = new SPSite(Constants.Host))
-            using (var web = site.OpenWeb(Constants.Web))
-            {
-                var spList = web.Lists.TryGetList(Constants.Lists.Activities);
-                if (spList == null)
-                {
-                    return HttpStatusCode.InternalServerError;
-                }
-
-                var spActivities = GetSpActivities(spList);
-
-                var newSpActivities = GetNewSpActivities(activities, spActivities, web);
-
-                web.AllowUnsafeUpdates = true;
-                statusCode = UpdateSpActivities(newSpActivities, spList);
-            }
-
-            return statusCode;
-        }
-
-        private static HttpStatusCode UpdateSpActivities(IEnumerable<SpActivity> newSpActivities, SPList spList)
-        {
             var statusCode = HttpStatusCode.Accepted;
-
-            foreach (var item in newSpActivities)
+            
+            try
             {
-                if (item.IsNew)
+                using (var site = new SPSite(Constants.Host))
+                using (var web = site.OpenWeb(Constants.Web))
                 {
-                    var newItem = spList.Items.Add();
+                    var spList = web.Lists.TryGetList(Constants.Lists.Activities);
+                    if (spList == null) throw new Exception();
 
-                    newItem[Constants.Activity.User] = item.User;
-                    newItem[Constants.Activity.Month] = item.Month;
-                    newItem[Constants.Activity.Year] = item.Year;
-                    var newActivitiesValue = new SPFieldMultiChoiceValue();
-                    foreach (var itemActivity in item.Activities)
-                    {
-                        newActivitiesValue.Add(itemActivity);
-                    }
+                    var spActivities = GetSpActivities(spList);
 
-                    newItem[Constants.Activity.Activities] = newActivitiesValue;
+                    var newSpActivities = GetNewSpActivities(activities, spActivities, web);
 
-                    newItem.Update();
+                    web.AllowUnsafeUpdates = true;
 
-                    statusCode = HttpStatusCode.Created;
-
-                    continue;
+                    UpdateSpActivities(newSpActivities, spList, ref statusCode);
                 }
-
-                if (!item.IsNewActivity) continue;
-
-                var itemToUpdate = spList.Items.GetItemById(item.Id);
-                var activityField = itemToUpdate.Fields.GetField(Constants.Activity.Activities);
-                var activityFieldValue =
-                    activityField.GetFieldValue(itemToUpdate[Constants.Activity.Activities].ToString()) as
-                        SPFieldMultiChoiceValue;
-                for (int i = 0; i < activityFieldValue.Count; i++)
-                {
-                    item.Activities.Remove(activityFieldValue[i]);
-                }
-
-                foreach (var newItemActivity in item.Activities)
-                {
-                    activityFieldValue.Add(newItemActivity);
-                }
-                activityField.Update();
-
-                statusCode = HttpStatusCode.Created;
             }
+            catch (Exception e)
+            {
+                statusCode = HttpStatusCode.InternalServerError;
+                _logger.LogError(e.Message);
+            }
+
+            _logger.LogInformation("Sending response");
 
             return statusCode;
         }
 
-        private static IEnumerable<SpActivity> GetNewSpActivities(IEnumerable<ActivityInfo> activities, IEnumerable<SpActivity> spActivities, SPWeb web)
+        private static IEnumerable<SpActivity> GetSpActivities(SPList spList)
+        {
+            var spActivities = new List<SpActivity>();
+
+            foreach (var item in spList.GetItems().Cast<SPListItem>())
+            {
+                var userField = item.Fields.GetField(Constants.Activity.User);
+                var userFieldValue =
+                    userField.GetFieldValue(item[Constants.Activity.User].ToString()) as SPFieldUserValue;
+                var user = userFieldValue.User;
+
+                var month = Convert.ToInt32(item[Constants.Activity.Month]);
+                var year = Convert.ToInt32(item[Constants.Activity.Year]);
+
+                var activityField = item.Fields.GetField(Constants.Activity.Activities);
+                var activityFieldValue =
+                    activityField.GetFieldValue(item[Constants.Activity.Activities].ToString()) as
+                        SPFieldMultiChoiceValue;
+
+                var activities = new List<string>();
+                for (var i = 0; i < activityFieldValue.Count; i++) activities.Add(activityFieldValue[i]);
+
+                spActivities.Add(new SpActivity
+                {
+                    User = user,
+                    Month = month,
+                    Year = year,
+                    Activities = activities,
+                    Id = item.ID
+                });
+            }
+
+            return spActivities;
+        }
+
+        private static IEnumerable<SpActivity> GetNewSpActivities(IEnumerable<ActivityInfo> activities,
+            IEnumerable<SpActivity> spActivities, SPWeb web)
         {
             var newSpActivities = new List<SpActivity>();
 
@@ -99,20 +100,19 @@ namespace Test.Activities.Automation.WCFService
                     x.Year == item.Date.Year && x.Month == item.Date.Month && x.User.Email == item.UserEmail);
                 if (spActivity != null)
                 {
-                    if (!spActivity.Activities.Contains(item.Activity))
-                    {
-                        var newSpActivity = new SpActivity()
-                        {
-                            Id = spActivity.Id,
-                            Month = spActivity.Month,
-                            User = spActivity.User,
-                            Year = spActivity.Year,
-                            Activities = new List<string>(spActivity.Activities),
-                            IsNewActivity = true
-                        };
+                    if (spActivity.Activities.Contains(item.Activity)) continue;
 
-                        newSpActivity.Activities.Add(item.Activity);
-                    }
+                    var newSpActivity = new SpActivity
+                    {
+                        Id = spActivity.Id,
+                        Month = spActivity.Month,
+                        User = spActivity.User,
+                        Year = spActivity.Year,
+                        Activities = new List<string>(spActivity.Activities),
+                        IsNewActivity = true
+                    };
+
+                    newSpActivity.Activities.Add(item.Activity);
                 }
                 else
                 {
@@ -127,12 +127,12 @@ namespace Test.Activities.Automation.WCFService
                     {
                         var user = web.Users.GetByEmail(item.UserEmail);
 
-                        newSpActivities.Add(new SpActivity()
+                        newSpActivities.Add(new SpActivity
                         {
                             Month = item.Date.Month,
                             Year = item.Date.Year,
                             User = user,
-                            Activities = new List<string>()
+                            Activities = new List<string>
                             {
                                 item.Activity
                             },
@@ -148,50 +148,61 @@ namespace Test.Activities.Automation.WCFService
             return newSpActivities;
         }
 
-        private static IEnumerable<SpActivity> GetSpActivities(SPList spList)
+        private static void UpdateSpActivities(IEnumerable<SpActivity> newSpActivities, SPList spList,
+            ref HttpStatusCode statusCode)
         {
-            var spActivities = new List<SpActivity>();
-            foreach (var item in spList.GetItems().Cast<SPListItem>())
+            foreach (var item in newSpActivities)
             {
-                var userField = item.Fields.GetField(Constants.Activity.User);
-                var userFieldValue = userField.GetFieldValue(item[Constants.Activity.User].ToString()) as SPFieldUserValue;
-                var user = userFieldValue.User;
-
-                var month = Convert.ToInt32(item[Constants.Activity.Month]);
-                var year = Convert.ToInt32(item[Constants.Activity.Year]);
-
-                var activityField = item.Fields.GetField(Constants.Activity.Activities);
-                var activityFieldValue =
-                    activityField.GetFieldValue(item[Constants.Activity.Activities].ToString()) as SPFieldMultiChoiceValue;
-
-                var activs = new List<string>();
-                for (int i = 0; i < activityFieldValue.Count; i++)
+                if (item.IsNew)
                 {
-                    activs.Add(activityFieldValue[i]);
+                    AddNewItem(spList, item, ref statusCode);
+
+                    continue;
                 }
 
-                spActivities.Add(new SpActivity()
-                {
-                    User = user,
-                    Month = month,
-                    Year = year,
-                    Activities = activs,
-                    Id = item.ID
-                });
+                if (item.IsNewActivity) AddItemActivity(spList, item, ref statusCode);
+            }
+        }
+
+        private static void AddNewItem(SPList spList, SpActivity item, ref HttpStatusCode statusCode)
+        {
+            var newItem = spList.Items.Add();
+
+            newItem[Constants.Activity.User] = item.User;
+            newItem[Constants.Activity.Month] = item.Month;
+            newItem[Constants.Activity.Year] = item.Year;
+            var newActivitiesValue = new SPFieldMultiChoiceValue();
+
+            foreach (var itemActivity in item.Activities) newActivitiesValue.Add(itemActivity);
+
+            newItem[Constants.Activity.Activities] = newActivitiesValue;
+
+            newItem.Update();
+
+            statusCode = HttpStatusCode.Created;
+        }
+
+        private static void AddItemActivity(SPList spList, SpActivity item, ref HttpStatusCode statusCode)
+        {
+            var itemToUpdate = spList.Items.GetItemById(item.Id);
+            var activityField = itemToUpdate.Fields.GetField(Constants.Activity.Activities);
+            var activityFieldValue =
+                activityField.GetFieldValue(itemToUpdate[Constants.Activity.Activities].ToString()) as
+                    SPFieldMultiChoiceValue;
+
+            if (activityFieldValue == null)
+            {
+                statusCode = HttpStatusCode.InternalServerError;
+                return;
             }
 
-            return spActivities;
-        }
-    }
+            for (var i = 0; i < activityFieldValue.Count; i++) item.Activities.Remove(activityFieldValue[i]);
 
-    public class SpActivity
-    {
-        public int Id { get; set; }
-        public SPUser User { get; set; }
-        public int Year { get; set; }
-        public int Month { get; set; }
-        public List<string> Activities { get; set; }
-        public bool IsNew { get; set; }
-        public bool IsNewActivity { get; set; }
+            foreach (var newItemActivity in item.Activities) activityFieldValue.Add(newItemActivity);
+
+            activityField.Update();
+
+            statusCode = HttpStatusCode.Created;
+        }
     }
 }
