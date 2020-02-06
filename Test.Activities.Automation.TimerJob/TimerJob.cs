@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -21,7 +22,13 @@ namespace Test.Activities.Automation.TimerJob
 
         public TimerJob()
         {
-            _logger = new ULSLogger(GetType().FullName);
+            try
+            {
+                _logger = new ULSLogger(GetType().FullName);
+            }
+            catch
+            {
+            }
         }
 
         public TimerJob(string name, SPWebApplication webApp, SPServer server, SPJobLockType lockType)
@@ -31,32 +38,48 @@ namespace Test.Activities.Automation.TimerJob
 
         public override void Execute(Guid targetInstanceId)
         {
-            _logger.LogInformation("Executing timer");
-
             try
             {
-                var devActivities = GetDevActivities();
+                _logger?.LogInformation("Timer executing");
 
-                var mentoringActivities = GetMentoringActivities();
+                try
+                {
+                    var devActivities = GetDevActivities();
 
-                var allActivities = devActivities.Concat(mentoringActivities).ToList();
+                    var mentoringActivities = GetMentoringActivities();
 
-                SendActivities(allActivities);
+                    var allActivities = devActivities.Concat(mentoringActivities).ToList();
+
+                    SendActivities(allActivities);
+                }
+                catch (Exception e)
+                {
+                    _logger?.LogError(e.Message);
+                }
+
+                _logger?.LogInformation("Timer has executed");
             }
-            catch (Exception e)
+            catch
             {
-                _logger.LogError(e.Message);
             }
-            _logger.LogInformation("Timer executed");
         }
 
         private IEnumerable<ActivityInfo> GetDevActivities()
         {
-            var repositories = GetConfigRepositories();
+            try
+            {
+                _logger?.LogInformation("Getting dev activities");
+                
+                var repositories = GetConfigRepositories();
 
-            GetRepoCommits(repositories);
+                GetRepoCommits(repositories);
 
-            return CreateRepoActivities(repositories);
+                return CreateRepoActivities(repositories);
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Getting dev activities filed. {e.Message}");
+            }
         }
 
         private IEnumerable<ActivityInfo> CreateRepoActivities(IEnumerable<Repository> repositories)
@@ -171,16 +194,20 @@ namespace Test.Activities.Automation.TimerJob
 
         private IEnumerable<ActivityInfo> GetMentoringActivities()
         {
-            var activities = new List<ActivityInfo>();
-            SPList mentoringList;
-
-            using (var site = new SPSite(Constants.Host))
-            using (var web = site.OpenWeb(Constants.Web))
+            try
             {
-                mentoringList = web.Lists.TryGetList(Constants.Lists.MentoringCalendar);
-            }
+                _logger?.LogInformation("Getting mentoring activities");
+                
+                var activities = new List<ActivityInfo>();
+                SPList mentoringList;
 
-            var eventsCollection = mentoringList?.GetItems();
+                using (var site = new SPSite(Constants.Host))
+                using (var web = site.OpenWeb(Constants.Web))
+                {
+                    mentoringList = web.Lists.TryGetList(Constants.Lists.MentoringCalendar);
+                }
+
+                var eventsCollection = mentoringList?.GetItems();
                 var yesterday = DateTime.Now.AddDays(-1).Date;
                 var events = eventsCollection?.Cast<SPListItem>()
                     .Where(x => x[Constants.Calendar.StartTime] as DateTime? <= yesterday)
@@ -204,33 +231,47 @@ namespace Test.Activities.Automation.TimerJob
                     });
                 }
 
-            return activities.GroupBy(x => x.UserEmail).Select(x => x.First());
+                return activities.GroupBy(x => x.UserEmail).Select(x => x.First());
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Getting mentoring activities failed. {e.Message}");
+            }
         }
 
         private async void SendActivities(IEnumerable<ActivityInfo> activities)
         {
-            var serializer = new DataContractJsonSerializer(typeof(List<ActivityInfo>));
-
-            var ms = new MemoryStream();
-            serializer.WriteObject(ms, activities);
-
-            ms.Position = 0;
-            var reader = new StreamReader(ms);
-            var str = reader.ReadToEnd();
-
-            using (var svcHandler = new HttpClientHandler { UseDefaultCredentials = true })
-            using (var svcClient = new HttpClient(svcHandler))
+            try
             {
-                var content = new StringContent(str, Encoding.UTF8, Constants.HttpHeader.MediaType.ApplicationJson);
-                var uri = new Uri(Constants.ServiceUrl);
+                _logger?.LogInformation("Sending activities to service");
+                
+                var serializer = new DataContractJsonSerializer(typeof(List<ActivityInfo>));
 
-                for (var i = 0; i < 3; i++)
+                var ms = new MemoryStream();
+                serializer.WriteObject(ms, activities);
+
+                ms.Position = 0;
+                var reader = new StreamReader(ms);
+                var str = reader.ReadToEnd();
+
+                using (var svcHandler = new HttpClientHandler { UseDefaultCredentials = true })
+                using (var svcClient = new HttpClient(svcHandler))
                 {
-                    var res = await svcClient.PostAsync(uri, content);
-                    if (res.StatusCode == HttpStatusCode.OK) break;
+                    var content = new StringContent(str, Encoding.UTF8, Constants.HttpHeader.MediaType.ApplicationJson);
+                    var uri = new Uri(Constants.ServiceUrl);
 
-                    await Task.Delay(new TimeSpan(0, 5, 0));
+                    for (var i = 0; i < 3; i++)
+                    {
+                        var res = await svcClient.PostAsync(uri, content);
+                        if (res.StatusCode == HttpStatusCode.OK) break;
+
+                        await Task.Delay(new TimeSpan(0, 5, 0));
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Sending activities to service failed. {e.Message}");
             }
         }
     }
