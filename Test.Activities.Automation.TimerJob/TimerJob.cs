@@ -18,6 +18,8 @@ namespace Test.Activities.Automation.TimerJob
 {
     public class TimerJob : SPJobDefinition
     {
+        private const int RequestAttempts = 3;
+
         private ILogger _logger;
 
         public TimerJob()
@@ -69,7 +71,7 @@ namespace Test.Activities.Automation.TimerJob
             try
             {
                 _logger?.LogInformation("Getting dev activities");
-                
+
                 var repositories = GetConfigRepositories();
 
                 GetRepoCommits(repositories);
@@ -78,7 +80,8 @@ namespace Test.Activities.Automation.TimerJob
             }
             catch (Exception e)
             {
-                throw new Exception($"Getting dev activities filed. {e.Message}");
+                _logger?.LogError($"Getting dev activities failed. {e.Message}");
+                return new List<ActivityInfo>();
             }
         }
 
@@ -95,67 +98,102 @@ namespace Test.Activities.Automation.TimerJob
 
         private IEnumerable<Repository> GetConfigRepositories()
         {
-            IEnumerable<SPListItem> configItems;
-
-            using (var site = new SPSite(Constants.Host))
-            using (var web = site.OpenWeb(Constants.Web))
+            try
             {
-                var configList = web.Lists.TryGetList(Constants.Lists.Configurations);
-                configItems = configList?.GetItems()?.Cast<SPListItem>();
-            }
+                IEnumerable<SPListItem> configItems;
 
-            return configItems?.Where(item =>
-                    item[Constants.Configuration.Key] as string ==
-                    Constants.Configuration.ConfigurationKeys.GitLabRepository)
-                .Select(item => item[Constants.Configuration.Value] as string)
-                .Select(value =>
-                    value?.Split(new[] { Constants.Configuration.Separator }, StringSplitOptions.RemoveEmptyEntries))
-                .Select(str => new Repository { Host = str?[0], ProjectId = str?[1], Activity = str?[2] })
-                .ToList();
+                using (var site = new SPSite(Constants.Host))
+                using (var web = site.OpenWeb(Constants.Web))
+                {
+                    var configList = web.Lists[Constants.Lists.Configurations];
+                    configItems = configList.GetItems().Cast<SPListItem>();
+                }
+
+                return configItems.Where(item =>
+                        item[Constants.Configuration.Key] as string ==
+                        Constants.Configuration.ConfigurationKeys.GitLabRepository)
+                    .Select(item => item[Constants.Configuration.Value] as string)
+                    .Select(value =>
+                        value.Split(new[] { Constants.Configuration.Separator }, StringSplitOptions.RemoveEmptyEntries))
+                    .Select(str => new Repository { Host = str[0], ProjectId = str[1], Activity = str[2] })
+                    .ToList();
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Getting repositories configuration failed. {e.Message}");
+            }
         }
 
         private void GetRepoCommits(IEnumerable<Repository> repositories)
         {
-            using (var handler = new HttpClientHandler())
-            using (var client = new HttpClient(handler))
+            try
             {
-                client.DefaultRequestHeaders.Add(Constants.GitLab.PrivateToken, Constants.GitLab.Token);
-                client.DefaultRequestHeaders.Accept.Add(
-                    new MediaTypeWithQualityHeaderValue(Constants.HttpHeader.MediaType.ApplicationJson));
-
-                foreach (var repo in repositories)
+                using (var handler = new HttpClientHandler())
+                using (var client = new HttpClient(handler))
                 {
-                    var branches = GetBranches(client, repo);
+                    client.DefaultRequestHeaders.Add(Constants.GitLab.PrivateToken, Constants.GitLab.Token);
+                    client.DefaultRequestHeaders.Accept.Add(
+                        new MediaTypeWithQualityHeaderValue(Constants.HttpHeader.MediaType.ApplicationJson));
 
-                    foreach (var branch in branches)
+                    foreach (var repo in repositories)
                     {
-                        var commits = GetBranchCommits(client, branch, repo);
+                        try
+                        {
+                            var branches = GetBranches(client, repo);
 
-                        branch.Commits = new List<Commit>(commits);
+                            foreach (var branch in branches)
+                            {
+                                var commits = GetBranchCommits(client, branch, repo);
+
+                                branch.Commits = new List<Commit>(commits);
+                            }
+
+                            repo.Branches = new List<Branch>(branches);
+                        }
+                        catch (Exception e)
+                        {
+                            _logger.LogError($"Getting '{repo.Host}' repository commits failed. {e.Message}");
+                        }
                     }
-
-                    repo.Branches = new List<Branch>(branches);
                 }
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Getting repository commits failed. {e.Message}");
             }
         }
 
         private IEnumerable<Commit> GetBranchCommits(HttpClient client, Branch branch, Repository repo)
         {
-            var url =
-                $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Commits}" +
-                $"?{Constants.GitLab.Branch}{branch.Name}" +
-                $"&{Constants.GitLab.Since}{DateTime.Now.AddDays(-1).Date:yyyy-MM-dd}" +
-                $"&{Constants.GitLab.Until}{DateTime.Now.Date:yyyy-MM-dd}";
+            try
+            {
+                var url =
+                    $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Commits}" +
+                    $"?{Constants.GitLab.Branch}{branch.Name}" +
+                    $"&{Constants.GitLab.Since}{DateTime.Now.AddDays(-1).Date:yyyy-MM-dd}" +
+                    $"&{Constants.GitLab.Until}{DateTime.Now.Date:yyyy-MM-dd}";
 
-            return GetApiCollection<Commit>(url, client);
+                return GetApiCollection<Commit>(url, client);
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Getting branch commits failed. {e.Message}");
+            }
         }
 
         private IEnumerable<Branch> GetBranches(HttpClient client, Repository repo)
         {
-            var url =
-                $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Branches}";
+            try
+            {
+                var url =
+                    $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Branches}";
 
-            return GetApiCollection<Branch>(url, client);
+                return GetApiCollection<Branch>(url, client);
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Getting branches failed. {e.Message}");
+            }
         }
 
         private IEnumerable<T> GetApiCollection<T>(string url, HttpClient client) where T : class
@@ -197,32 +235,27 @@ namespace Test.Activities.Automation.TimerJob
             try
             {
                 _logger?.LogInformation("Getting mentoring activities");
-                
+
                 var activities = new List<ActivityInfo>();
                 SPList mentoringList;
 
                 using (var site = new SPSite(Constants.Host))
                 using (var web = site.OpenWeb(Constants.Web))
                 {
-                    mentoringList = web.Lists.TryGetList(Constants.Lists.MentoringCalendar);
+                    mentoringList = web.Lists[Constants.Lists.MentoringCalendar];
                 }
 
-                var eventsCollection = mentoringList?.GetItems();
+                var eventsCollection = mentoringList.GetItems();
                 var yesterday = DateTime.Now.AddDays(-1).Date;
-                var events = eventsCollection?.Cast<SPListItem>()
+                var events = eventsCollection.Cast<SPListItem>()
                     .Where(x => x[Constants.Calendar.StartTime] as DateTime? <= yesterday)
                     .Where(x => x[Constants.Calendar.EndTime] as DateTime? >= yesterday);
-
-                if (events == null)
-                {
-                    return activities;
-                }
 
                 foreach (var item in events)
                 {
                     var userField = item.Fields.GetField(Constants.Calendar.Employee);
                     var userFieldValue =
-                        userField?.GetFieldValue(item[Constants.Calendar.Employee].ToString()) as SPFieldUserValue;
+                        userField.GetFieldValue(item[Constants.Calendar.Employee].ToString()) as SPFieldUserValue;
                     activities.Add(new ActivityInfo
                     {
                         UserEmail = userFieldValue?.User.Email,
@@ -235,7 +268,8 @@ namespace Test.Activities.Automation.TimerJob
             }
             catch (Exception e)
             {
-                throw new Exception($"Getting mentoring activities failed. {e.Message}");
+                _logger.LogError($"Getting mentoring activities failed. {e.Message}");
+                return new List<ActivityInfo>();
             }
         }
 
@@ -244,7 +278,7 @@ namespace Test.Activities.Automation.TimerJob
             try
             {
                 _logger?.LogInformation("Sending activities to service");
-                
+
                 var serializer = new DataContractJsonSerializer(typeof(List<ActivityInfo>));
 
                 var ms = new MemoryStream();
@@ -260,13 +294,20 @@ namespace Test.Activities.Automation.TimerJob
                     var content = new StringContent(str, Encoding.UTF8, Constants.HttpHeader.MediaType.ApplicationJson);
                     var uri = new Uri(Constants.ServiceUrl);
 
-                    for (var i = 0; i < 3; i++)
+                    for (var i = 0; i < RequestAttempts; i++)
                     {
                         var res = await svcClient.PostAsync(uri, content);
-                        if (res.StatusCode == HttpStatusCode.OK) break;
+                        if (res.StatusCode == HttpStatusCode.OK) return;
 
-                        await Task.Delay(new TimeSpan(0, 5, 0));
+                        _logger?.LogWarning($"Request {i} failed");
+                        
+                        if (i!=RequestAttempts)
+                        {
+                            await Task.Delay(new TimeSpan(0, 5, 0));
+                        }
                     }
+
+                    throw new Exception("All requests to service failed");
                 }
             }
             catch (Exception e)

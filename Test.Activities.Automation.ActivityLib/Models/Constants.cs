@@ -16,8 +16,6 @@
             public static class ActivityType
             {
                 public const string Mentoring = "Mentoring";
-                public const string Development1 = "Development1";
-                public const string Development2 = "Development2";
             }
         }
 
@@ -65,11 +63,6 @@
             {
                 public const string ApplicationJson = "application/json";
             }
-        }
-
-        public static class Format
-        {
-            public const string DateFormat = "yyyy-MM-dd'T'HH:mm:ssZ";
         }
     }
 }

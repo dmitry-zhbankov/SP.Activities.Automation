@@ -5,7 +5,6 @@ using System.Net;
 using System.ServiceModel.Activation;
 using Microsoft.SharePoint;
 using Test.Activities.Automation.ActivityLib;
-
 using Test.Activities.Automation.WCFService.Models;
 
 namespace Test.Activities.Automation.WCFService
@@ -19,13 +18,13 @@ namespace Test.Activities.Automation.WCFService
         {
             try
             {
-                _logger=new ULSLogger(GetType().FullName);
+                _logger = new ULSLogger(GetType().FullName);
             }
             catch
             {
             }
         }
-        
+
         public HttpStatusCode FillActivities(IEnumerable<ActivityInfo> activities)
         {
             var statusCode = HttpStatusCode.Accepted;
@@ -74,7 +73,7 @@ namespace Test.Activities.Automation.WCFService
             try
             {
                 _logger?.LogInformation("Getting existing activities from SP");
-                
+
                 var spActivities = new List<SpActivity>();
 
                 foreach (var item in spList.GetItems().Cast<SPListItem>())
@@ -119,7 +118,7 @@ namespace Test.Activities.Automation.WCFService
             try
             {
                 _logger?.LogInformation("Calculating new activities");
-                
+
                 var newSpActivities = new List<SpActivity>();
 
                 foreach (var item in activities)
@@ -169,7 +168,7 @@ namespace Test.Activities.Automation.WCFService
                         }
                         catch
                         {
-                            _logger?.LogWarning($"User {item.UserEmail} not found in SP list");
+                            _logger?.LogWarning($"User {item.UserEmail} is not found in web user list");
                         }
                     }
                 }
@@ -188,7 +187,7 @@ namespace Test.Activities.Automation.WCFService
             try
             {
                 _logger?.LogInformation("Updating SP activities list");
-                
+
                 foreach (var item in newSpActivities)
                 {
                     if (item.IsNew)
