@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Microsoft.SharePoint;
 
-namespace Test.Activities.Automation.WCFService.Models
+namespace Test.Activities.Automation.ActivityLib.Models
 {
     public class SpActivity
     {

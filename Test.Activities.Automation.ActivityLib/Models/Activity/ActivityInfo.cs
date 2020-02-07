@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Test.Activities.Automation.ActivityLib
+namespace Test.Activities.Automation.ActivityLib.Models
 {
     [DataContract]
     public class ActivityInfo

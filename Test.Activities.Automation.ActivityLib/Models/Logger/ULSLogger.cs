@@ -1,6 +1,6 @@
 ﻿using Microsoft.SharePoint.Administration;
 
-namespace Test.Activities.Automation.ActivityLib
+namespace Test.Activities.Automation.ActivityLib.Models
 {
     public class ULSLogger : ILogger
     {

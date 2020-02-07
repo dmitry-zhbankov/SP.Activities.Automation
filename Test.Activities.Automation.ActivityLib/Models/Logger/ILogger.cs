@@ -1,4 +1,4 @@
-﻿namespace Test.Activities.Automation.ActivityLib
+﻿namespace Test.Activities.Automation.ActivityLib.Models
 {
     public interface ILogger
     {

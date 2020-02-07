@@ -3,6 +3,7 @@ using System.Net;
 using System.ServiceModel;
 using System.ServiceModel.Web;
 using Test.Activities.Automation.ActivityLib;
+using Test.Activities.Automation.ActivityLib.Models;
 
 namespace Test.Activities.Automation.WCFService
 {

@@ -57,13 +57,10 @@
     <Reference Include="Microsoft.SharePoint.Client.ServerRuntime" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Models\Branch.cs" />
-    <Compile Include="Models\Commit.cs" />
     <Compile Include="Features\TimerJobFeature\TimerJobFeature.EventReceiver.cs">
       <DependentUpon>TimerJobFeature.feature</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Models\Repository.cs" />
     <Compile Include="TimerJob.cs" />
   </ItemGroup>
   <ItemGroup>

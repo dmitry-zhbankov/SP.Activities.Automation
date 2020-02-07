@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.SharePoint;
 using Microsoft.SharePoint.Administration;
 using Test.Activities.Automation.ActivityLib;
-using Test.Activities.Automation.TimerJob.Models;
+using Test.Activities.Automation.ActivityLib.Models;
 
 namespace Test.Activities.Automation.TimerJob
 {
@@ -46,13 +46,11 @@ namespace Test.Activities.Automation.TimerJob
 
                 try
                 {
-                    var devActivities = GetDevActivities();
+                    var activityService=new ActivityInfoService(_logger);
 
-                    var mentoringActivities = GetMentoringActivities();
+                    var activities = activityService.GetActivities();
 
-                    var allActivities = devActivities.Concat(mentoringActivities).ToList();
-
-                    SendActivities(allActivities);
+                    SendActivities(activities);
                 }
                 catch (Exception e)
                 {
@@ -63,213 +61,6 @@ namespace Test.Activities.Automation.TimerJob
             }
             catch
             {
-            }
-        }
-
-        private IEnumerable<ActivityInfo> GetDevActivities()
-        {
-            try
-            {
-                _logger?.LogInformation("Getting dev activities");
-
-                var repositories = GetConfigRepositories();
-
-                GetRepoCommits(repositories);
-
-                return CreateRepoActivities(repositories);
-            }
-            catch (Exception e)
-            {
-                _logger?.LogError($"Getting dev activities failed. {e.Message}");
-                return new List<ActivityInfo>();
-            }
-        }
-
-        private IEnumerable<ActivityInfo> CreateRepoActivities(IEnumerable<Repository> repositories)
-        {
-            var activities = new List<ActivityInfo>();
-            foreach (var repo in repositories)
-                foreach (var branch in repo.Branches)
-                    activities.AddRange(branch.Commits.Select(commit => new ActivityInfo
-                    { Activity = repo.Activity, Date = DateTime.Parse(commit.Date), UserEmail = commit.AuthorEmail }));
-
-            return activities.GroupBy(x => x.UserEmail).Select(x => x.First());
-        }
-
-        private IEnumerable<Repository> GetConfigRepositories()
-        {
-            try
-            {
-                IEnumerable<SPListItem> configItems;
-
-                using (var site = new SPSite(Constants.Host))
-                using (var web = site.OpenWeb(Constants.Web))
-                {
-                    var configList = web.Lists[Constants.Lists.Configurations];
-                    configItems = configList.GetItems().Cast<SPListItem>();
-                }
-
-                return configItems.Where(item =>
-                        item[Constants.Configuration.Key] as string ==
-                        Constants.Configuration.ConfigurationKeys.GitLabRepository)
-                    .Select(item => item[Constants.Configuration.Value] as string)
-                    .Select(value =>
-                        value.Split(new[] { Constants.Configuration.Separator }, StringSplitOptions.RemoveEmptyEntries))
-                    .Select(str => new Repository { Host = str[0], ProjectId = str[1], Activity = str[2] })
-                    .ToList();
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Getting repositories configuration failed. {e.Message}");
-            }
-        }
-
-        private void GetRepoCommits(IEnumerable<Repository> repositories)
-        {
-            try
-            {
-                using (var handler = new HttpClientHandler())
-                using (var client = new HttpClient(handler))
-                {
-                    client.DefaultRequestHeaders.Add(Constants.GitLab.PrivateToken, Constants.GitLab.Token);
-                    client.DefaultRequestHeaders.Accept.Add(
-                        new MediaTypeWithQualityHeaderValue(Constants.HttpHeader.MediaType.ApplicationJson));
-
-                    foreach (var repo in repositories)
-                    {
-                        try
-                        {
-                            var branches = GetBranches(client, repo);
-
-                            foreach (var branch in branches)
-                            {
-                                var commits = GetBranchCommits(client, branch, repo);
-
-                                branch.Commits = new List<Commit>(commits);
-                            }
-
-                            repo.Branches = new List<Branch>(branches);
-                        }
-                        catch (Exception e)
-                        {
-                            _logger.LogError($"Getting '{repo.Host}' repository commits failed. {e.Message}");
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Getting repository commits failed. {e.Message}");
-            }
-        }
-
-        private IEnumerable<Commit> GetBranchCommits(HttpClient client, Branch branch, Repository repo)
-        {
-            try
-            {
-                var url =
-                    $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Commits}" +
-                    $"?{Constants.GitLab.Branch}{branch.Name}" +
-                    $"&{Constants.GitLab.Since}{DateTime.Now.AddDays(-1).Date:yyyy-MM-dd}" +
-                    $"&{Constants.GitLab.Until}{DateTime.Now.Date:yyyy-MM-dd}";
-
-                return GetApiCollection<Commit>(url, client);
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Getting branch commits failed. {e.Message}");
-            }
-        }
-
-        private IEnumerable<Branch> GetBranches(HttpClient client, Repository repo)
-        {
-            try
-            {
-                var url =
-                    $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Branches}";
-
-                return GetApiCollection<Branch>(url, client);
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Getting branches failed. {e.Message}");
-            }
-        }
-
-        private IEnumerable<T> GetApiCollection<T>(string url, HttpClient client) where T : class
-        {
-            var response = client.GetAsync(url).Result;
-            var stream = response.Content.ReadAsStreamAsync().Result;
-
-            var res = new List<T>();
-
-            var reader = new StreamReader(stream);
-            stream.Position = 0;
-
-            var ch = reader.Read();
-            if (ch == '[')
-            {
-                var multiple = JsonDeserialize<T[]>(stream);
-                res.AddRange(multiple);
-
-                return res;
-            }
-
-            var single = JsonDeserialize<T>(stream);
-            res.Add(single);
-
-            return res;
-        }
-
-        private T JsonDeserialize<T>(Stream stream) where T : class
-        {
-            var serializer = new DataContractJsonSerializer(typeof(T));
-
-            stream.Position = 0;
-            var res = serializer.ReadObject(stream) as T;
-            return res;
-        }
-
-        private IEnumerable<ActivityInfo> GetMentoringActivities()
-        {
-            try
-            {
-                _logger?.LogInformation("Getting mentoring activities");
-
-                var activities = new List<ActivityInfo>();
-                SPList mentoringList;
-
-                using (var site = new SPSite(Constants.Host))
-                using (var web = site.OpenWeb(Constants.Web))
-                {
-                    mentoringList = web.Lists[Constants.Lists.MentoringCalendar];
-                }
-
-                var eventsCollection = mentoringList.GetItems();
-                var yesterday = DateTime.Now.AddDays(-1).Date;
-                var events = eventsCollection.Cast<SPListItem>()
-                    .Where(x => x[Constants.Calendar.StartTime] as DateTime? <= yesterday)
-                    .Where(x => x[Constants.Calendar.EndTime] as DateTime? >= yesterday);
-
-                foreach (var item in events)
-                {
-                    var userField = item.Fields.GetField(Constants.Calendar.Employee);
-                    var userFieldValue =
-                        userField.GetFieldValue(item[Constants.Calendar.Employee].ToString()) as SPFieldUserValue;
-                    activities.Add(new ActivityInfo
-                    {
-                        UserEmail = userFieldValue?.User.Email,
-                        Activity = Constants.Activity.ActivityType.Mentoring,
-                        Date = yesterday
-                    });
-                }
-
-                return activities.GroupBy(x => x.UserEmail).Select(x => x.First());
-            }
-            catch (Exception e)
-            {
-                _logger.LogError($"Getting mentoring activities failed. {e.Message}");
-                return new List<ActivityInfo>();
             }
         }
 

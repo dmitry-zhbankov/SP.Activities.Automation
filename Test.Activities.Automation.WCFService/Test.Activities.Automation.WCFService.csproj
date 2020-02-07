@@ -61,7 +61,6 @@
       <DependentUpon>AutomationService.svc</DependentUpon>
     </Compile>
     <Compile Include="ISAPI\IAutomationService.cs" />
-    <Compile Include="Models\SpActivity.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -1,10 +1,10 @@
-﻿namespace Test.Activities.Automation.ActivityLib
+﻿namespace Test.Activities.Automation.ActivityLib.Models
 {
     public static class Constants
     {
         public const string ServiceUrl = @"http://localhost/_vti_bin/AutomationService.svc/FillActivities";
         public const string Host = "http://localhost";
-        public const string Web = "Projects";
+        public const string Web = "Projects2";
 
         public static class Activity
         {
@@ -22,7 +22,7 @@
         public static class Lists
         {
             public const string MentoringCalendar = "MentoringCalendar";
-            public const string Configurations = "Config";
+            public const string Configurations = "Configuration";
             public const string Activities = "Activities";
         }
 

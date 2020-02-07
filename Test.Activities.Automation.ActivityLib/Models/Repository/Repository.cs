@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Test.Activities.Automation.TimerJob.Models
+namespace Test.Activities.Automation.ActivityLib.Models
 {
     public class Repository
     {
