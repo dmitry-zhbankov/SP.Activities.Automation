@@ -19,11 +19,11 @@ namespace Test.Activities.Automation.Test
 
                 try
                 {
-                    var activityService = new ActivityInfoService(logger);
+                    var activityService = new FetchActivityService(logger);
 
                     var activities = activityService.GetActivities();
 
-                    var spActivityService=new SpActivityService(logger);
+                    var spActivityService=new SyncActivityService(logger);
 
                     spActivityService.SynchronizeSpActivities(activities);
                 }

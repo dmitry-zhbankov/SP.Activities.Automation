@@ -1,4 +1,4 @@
-﻿namespace Test.Activities.Automation.ActivityLib.Models
+﻿namespace Test.Activities.Automation.ActivityLib.Utils.Constants
 {
     public static class Constants
     {
@@ -12,18 +12,22 @@
             public const string Month = "Month";
             public const string User = "User";
             public const string Activities = "Activities";
+            public const string Employee = "Employee";
 
             public static class ActivityType
             {
                 public const string Mentoring = "Mentoring";
+                public const string RootMentoring = "Root Mentoring";
             }
         }
 
         public static class Lists
         {
-            public const string MentoringCalendar = "MentoringCalendar";
+            public const string MentoringCalendar = "Timetable";
             public const string Configurations = "Configuration";
             public const string Activities = "Activities";
+            public const string Mentors = "Mentors";
+            public const string RootMentors = "Root Mentors";
         }
 
         public static class Configuration
@@ -54,7 +58,8 @@
         {
             public const string StartTime = "Start Time";
             public const string EndTime = "End Time";
-            public const string Employee = "Employee";
+            public const string Mentor = "Mentor";
+            public const string RootMentor = "Root Mentor";
         }
 
         public static class HttpHeader

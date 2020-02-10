@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using Microsoft.SharePoint;
+using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
 namespace Test.Activities.Automation.ActivityLib.Models
 {
-    public class SpActivityService
+    public class SyncActivityService
     {
         private ILogger _logger;
 
-        public SpActivityService(ILogger logger)
+        public SyncActivityService(ILogger logger)
         {
             _logger = logger;
         }
@@ -23,7 +24,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
                 var spList = web.Lists.TryGetList(Constants.Lists.Activities);
                 if (spList == null) throw new Exception("Getting SP list failed");
 
-                var spActivityService = new SpActivityService(_logger);
+                var spActivityService = new SyncActivityService(_logger);
 
                 web.AllowUnsafeUpdates = true;
 
@@ -105,7 +106,6 @@ namespace Test.Activities.Automation.ActivityLib.Models
                             User = spActivity.User,
                             Year = spActivity.Year,
                             Activities = new List<string>(spActivity.Activities),
-                            IsNewActivity = true
                         };
 
                         newSpActivity.Activities.Add(item.Activity);
@@ -132,7 +132,6 @@ namespace Test.Activities.Automation.ActivityLib.Models
                                 {
                                     item.Activity
                                 },
-                                IsNew = true
                             });
                         }
                         catch
@@ -160,12 +159,12 @@ namespace Test.Activities.Automation.ActivityLib.Models
                 {
                     if (item.IsNew)
                     {
-                        AddNewItem(spList, item);
-
-                        continue;
+                        InsertActivity(spList, item);
                     }
-
-                    if (item.IsNewActivity) AddItemActivity(spList, item);
+                    else
+                    {
+                        UpdateActivity(spList, item);
+                    }
                 }
             }
             catch (Exception e)
@@ -174,7 +173,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
         }
 
-        private void AddNewItem(SPList spList, SpActivity item)
+        private void InsertActivity(SPList spList, SpActivity item)
         {
             var newItem = spList.Items.Add();
 
@@ -190,7 +189,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             newItem.Update();
         }
 
-        private void AddItemActivity(SPList spList, SpActivity item)
+        private void UpdateActivity(SPList spList, SpActivity item)
         {
             var itemToUpdate = spList.Items.GetItemById(item.Id);
             var activityField = itemToUpdate.Fields.GetField(Constants.Activity.Activities);

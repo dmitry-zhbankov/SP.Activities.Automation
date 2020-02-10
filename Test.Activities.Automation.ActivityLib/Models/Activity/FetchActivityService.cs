@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.SharePoint;
+using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
 namespace Test.Activities.Automation.ActivityLib.Models
 {
-    public class ActivityInfoService
+    public class FetchActivityService
     {
         private ILogger _logger;
 
-        public ActivityInfoService(ILogger logger)
+        public FetchActivityService(ILogger logger)
         {
             _logger = logger;
         }
@@ -62,15 +63,19 @@ namespace Test.Activities.Automation.ActivityLib.Models
                 _logger?.LogInformation("Getting mentoring activities");
 
                 var activities = new List<ActivityInfo>();
-                SPList mentoringList;
+                SPList mentoringCalendarList;
+                SPList mentorList;
+                SPList rootMentorList;
 
                 using (var site = new SPSite(Constants.Host))
                 using (var web = site.OpenWeb(Constants.Web))
                 {
-                    mentoringList = web.Lists[Constants.Lists.MentoringCalendar];
+                    mentoringCalendarList = web.Lists[Constants.Lists.MentoringCalendar];
+                    rootMentorList = web.Lists[Constants.Lists.RootMentors];
+                    mentorList = web.Lists[Constants.Lists.Mentors];
                 }
 
-                var eventsCollection = mentoringList.GetItems();
+                var eventsCollection = mentoringCalendarList.GetItems();
                 var yesterday = DateTime.Now.AddDays(-1).Date;
                 var events = eventsCollection.Cast<SPListItem>()
                     .Where(x => x[Constants.Calendar.StartTime] as DateTime? <= yesterday)
@@ -78,12 +83,22 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
                 foreach (var item in events)
                 {
-                    var userField = item.Fields.GetField(Constants.Calendar.Employee);
-                    var userFieldValue =
-                        userField.GetFieldValue(item[Constants.Calendar.Employee].ToString()) as SPFieldUserValue;
+                    var rootMentor = GetLookUpUser(rootMentorList, item, Constants.Calendar.RootMentor,
+                        Constants.Activity.Employee);
+                        
                     activities.Add(new ActivityInfo
                     {
-                        UserEmail = userFieldValue?.User.Email,
+                        UserEmail = rootMentor.Email,
+                        Activity = Constants.Activity.ActivityType.RootMentoring,
+                        Date = yesterday
+                    });
+
+                    var mentor = GetLookUpUser(mentorList, item, Constants.Calendar.Mentor,
+                        Constants.Activity.Employee);
+
+                    activities.Add(new ActivityInfo
+                    {
+                        UserEmail = mentor.Email,
                         Activity = Constants.Activity.ActivityType.Mentoring,
                         Date = yesterday
                     });
@@ -96,6 +111,19 @@ namespace Test.Activities.Automation.ActivityLib.Models
                 _logger.LogError($"Getting mentoring activities failed. {e.Message}");
                 return new List<ActivityInfo>();
             }
+        }
+
+        SPUser GetLookUpUser(SPList originList, SPListItem item, string lookUpField, string originField)
+        {
+            var userLookUpField = item.Fields.GetField(lookUpField);
+            var userFieldLookUpValue =
+                userLookUpField.GetFieldValue(item[lookUpField].ToString()) as SPFieldLookupValue;
+            var rootMentorField = originList.Fields.GetField(originField);
+            var rootMentorItem = originList.GetItemById(userFieldLookUpValue.LookupId);
+            var rootMentorFieldValue =
+                rootMentorField.GetFieldValue(rootMentorItem[originField].ToString()) as SPFieldUserValue;
+
+            return rootMentorFieldValue.User;
         }
     }
 }

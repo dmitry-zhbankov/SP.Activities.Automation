@@ -15,8 +15,6 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
         public List<string> Activities { get; set; }
 
-        public bool IsNew { get; set; }
-
-        public bool IsNewActivity { get; set; }
+        public bool IsNew => Id != 0;
     }
 }

@@ -13,6 +13,7 @@ using Microsoft.SharePoint;
 using Microsoft.SharePoint.Administration;
 using Test.Activities.Automation.ActivityLib;
 using Test.Activities.Automation.ActivityLib.Models;
+using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
 namespace Test.Activities.Automation.TimerJob
 {
@@ -46,7 +47,7 @@ namespace Test.Activities.Automation.TimerJob
 
                 try
                 {
-                    var activityService=new ActivityInfoService(_logger);
+                    var activityService=new FetchActivityService(_logger);
 
                     var activities = activityService.GetActivities();
 

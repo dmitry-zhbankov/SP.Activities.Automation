@@ -35,7 +35,7 @@ namespace Test.Activities.Automation.WCFService
 
                 try
                 {
-                    var spActivityService = new SpActivityService(_logger);
+                    var spActivityService = new SyncActivityService(_logger);
 
                     spActivityService.SynchronizeSpActivities(activities);
 
