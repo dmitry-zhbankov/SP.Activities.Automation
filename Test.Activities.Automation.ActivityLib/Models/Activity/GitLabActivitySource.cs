@@ -4,17 +4,22 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using Microsoft.SharePoint;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
 namespace Test.Activities.Automation.ActivityLib.Models
 {
-    public class RepositoryService
+    public class GitLabActivitySource : ActivitySource
     {
-        private ILogger _logger;
 
-        public IEnumerable<Repository> GetConfigRepositories()
+        private IEnumerable<Repository> _repositories;
+        public GitLabActivitySource(ILogger logger) : base(logger)
+        {
+        }
+
+        public override void Configure()
         {
             try
             {
@@ -27,9 +32,9 @@ namespace Test.Activities.Automation.ActivityLib.Models
                     configItems = configList.GetItems().Cast<SPListItem>();
                 }
 
-                return configItems.Where(item =>
-                        item[Constants.Configuration.Key] as string ==
-                        Constants.Configuration.ConfigurationKeys.GitLabRepository)
+                _repositories = configItems.Where(item =>
+                         item[Constants.Configuration.Key] as string ==
+                         Constants.Configuration.ConfigurationKeys.GitLabRepository)
                     .Select(item => item[Constants.Configuration.Value] as string)
                     .Select(value =>
                         value.Split(new[] { Constants.Configuration.Separator }, StringSplitOptions.RemoveEmptyEntries))
@@ -42,7 +47,37 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
         }
 
-        public void GetRepoCommits(IEnumerable<Repository> repositories)
+        public override IEnumerable<ActivityInfo> FetchActivity()
+        {
+            _logger.LogInformation("Fetching GitLab activity");
+
+            try
+            {
+                GetRepoCommits();
+
+                var activities = CreateRepoActivities();
+
+                return activities;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"Fetching GitLab activity failed. {e.Message}");
+                return null;
+            }
+        }
+
+        private IEnumerable<ActivityInfo> CreateRepoActivities()
+        {
+            var activities = new List<ActivityInfo>();
+            foreach (var repo in _repositories)
+                foreach (var branch in repo.Branches)
+                    activities.AddRange(branch.Commits.Select(commit => new ActivityInfo
+                    { Activity = repo.Activity, Date = DateTime.Parse(commit.Date), UserEmail = commit.AuthorEmail }));
+
+            return activities.GroupBy(x => x.UserEmail).Select(x => x.First());
+        }
+
+        private void GetRepoCommits()
         {
             try
             {
@@ -53,7 +88,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
                     client.DefaultRequestHeaders.Accept.Add(
                         new MediaTypeWithQualityHeaderValue(Constants.HttpHeader.MediaType.ApplicationJson));
 
-                    foreach (var repo in repositories)
+                    foreach (var repo in _repositories)
                     {
                         try
                         {
@@ -81,7 +116,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
         }
 
-        public IEnumerable<Commit> GetBranchCommits(HttpClient client, Branch branch, Repository repo)
+        private IEnumerable<Commit> GetBranchCommits(HttpClient client, Branch branch, Repository repo)
         {
             try
             {
@@ -146,6 +181,36 @@ namespace Test.Activities.Automation.ActivityLib.Models
             stream.Position = 0;
             var res = serializer.ReadObject(stream) as T;
             return res;
+        }
+
+        [DataContract]
+        private protected class Commit
+        {
+            [DataMember(Name = "author_email")]
+            public string AuthorEmail { get; set; }
+
+            [DataMember(Name = "created_at")]
+            public string Date { get; set; }
+        }
+
+        [DataContract]
+        private protected class Branch
+        {
+            [DataMember(Name = "name")]
+            public string Name { get; set; }
+
+            public List<Commit> Commits { get; set; }
+        }
+
+        private protected class Repository
+        {
+            public string Host { get; set; }
+
+            public string Activity { get; set; }
+
+            public string ProjectId { get; set; }
+
+            public List<Branch> Branches { get; set; }
         }
     }
 }

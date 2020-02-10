@@ -50,13 +50,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\Activity\ActivityInfo.cs" />
+    <Compile Include="Models\Activity\ActivitySource.cs" />
     <Compile Include="Models\Activity\FetchActivityService.cs" />
-    <Compile Include="Models\Repository\Branch.cs" />
-    <Compile Include="Models\Repository\Commit.cs" />
+    <Compile Include="Models\Activity\GitLabActivitySource.cs" />
+    <Compile Include="Models\Activity\SPCalendarActivitySource.cs" />
     <Compile Include="Utils\Constants\Constants.cs" />
     <Compile Include="Models\Logger\ILogger.cs" />
-    <Compile Include="Models\Repository\Repository.cs" />
-    <Compile Include="Models\Repository\RepositoryService.cs" />
     <Compile Include="Models\Activity\SpActivity.cs" />
     <Compile Include="Models\Activity\SyncActivityService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
