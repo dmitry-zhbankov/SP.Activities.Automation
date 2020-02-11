@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
 namespace Test.Activities.Automation.ActivityLib.Models
 {
@@ -14,7 +13,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             _logger = logger;
         }
 
-        public IEnumerable<ActivityInfo> GetActivities()
+        public IEnumerable<InfoActivity> GetActivities()
         {
             var devActivities = GetDevActivities();
 
@@ -23,7 +22,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             return devActivities.Concat(mentoringActivities).ToList();
         }
         
-        public IEnumerable<ActivityInfo> GetDevActivities()
+        public IEnumerable<InfoActivity> GetDevActivities()
         {
             try
             {
@@ -36,12 +35,11 @@ namespace Test.Activities.Automation.ActivityLib.Models
             catch (Exception e)
             {
                 _logger?.LogError($"Getting dev activities failed. {e.Message}");
-                return new List<ActivityInfo>();
+                return new List<InfoActivity>();
             }
         }
-
         
-        public  IEnumerable<ActivityInfo> GetMentoringActivities()
+        public  IEnumerable<InfoActivity> GetMentoringActivities()
         {
             try
             {
@@ -53,8 +51,8 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
             catch (Exception e)
             {
-                _logger.LogError($"Getting mentoring activities failed. {e.Message}");
-                return new List<ActivityInfo>();
+                _logger?.LogError($"Getting mentoring activities failed. {e.Message}");
+                return new List<InfoActivity>();
             }
         }
     }

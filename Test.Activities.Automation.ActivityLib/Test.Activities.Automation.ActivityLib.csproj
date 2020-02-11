@@ -49,15 +49,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Models\Activity\ActivityInfo.cs" />
-    <Compile Include="Models\Activity\ActivitySource.cs" />
-    <Compile Include="Models\Activity\FetchActivityService.cs" />
-    <Compile Include="Models\Activity\GitLabActivitySource.cs" />
-    <Compile Include="Models\Activity\SPCalendarActivitySource.cs" />
+    <Compile Include="Models\Activity\Classes\InfoActivity.cs" />
+    <Compile Include="Models\Activity\Sources\ActivitySource.cs" />
+    <Compile Include="Models\Activity\Services\FetchActivityService.cs" />
+    <Compile Include="Models\Activity\Sources\GitLabActivitySource.cs" />
+    <Compile Include="Models\Activity\Sources\SPCalendarActivitySource.cs" />
     <Compile Include="Utils\Constants\Constants.cs" />
     <Compile Include="Models\Logger\ILogger.cs" />
-    <Compile Include="Models\Activity\SpActivity.cs" />
-    <Compile Include="Models\Activity\SyncActivityService.cs" />
+    <Compile Include="Models\Activity\Classes\SpActivity.cs" />
+    <Compile Include="Models\Activity\Services\SyncActivityService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

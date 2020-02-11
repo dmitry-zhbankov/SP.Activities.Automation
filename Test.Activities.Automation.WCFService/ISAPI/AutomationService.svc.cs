@@ -25,7 +25,7 @@ namespace Test.Activities.Automation.WCFService
             }
         }
 
-        public HttpStatusCode FillActivities(IEnumerable<ActivityInfo> activities)
+        public HttpStatusCode FillActivities(IEnumerable<InfoActivity> activities)
         {
             var statusCode = HttpStatusCode.Accepted;
 
@@ -37,7 +37,7 @@ namespace Test.Activities.Automation.WCFService
                 {
                     var spActivityService = new SyncActivityService(_logger);
 
-                    spActivityService.SynchronizeSpActivities(activities);
+                    spActivityService.Sync(activities);
 
                     _logger.LogInformation("Request has been treated successfully");
                 }

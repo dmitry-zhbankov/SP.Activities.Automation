@@ -25,7 +25,7 @@ namespace Test.Activities.Automation.Test
 
                     var spActivityService=new SyncActivityService(logger);
 
-                    spActivityService.SynchronizeSpActivities(activities);
+                    spActivityService.Sync(activities);
                 }
                 catch (Exception e)
                 {

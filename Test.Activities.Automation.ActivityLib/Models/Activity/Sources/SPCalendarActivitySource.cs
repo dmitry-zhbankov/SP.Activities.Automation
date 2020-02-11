@@ -43,20 +43,20 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
         }
 
-        public override IEnumerable<ActivityInfo> FetchActivity()
+        public override IEnumerable<InfoActivity> FetchActivity()
         {
             _logger?.LogInformation("Fetching mentoring activities");
             
             try
             {
-                var activities = new List<ActivityInfo>();
+                var activities = new List<InfoActivity>();
 
                 foreach (var item in _events)
                 {
                     var rootMentor = GetLookUpUser(_rootMentorList, item, Constants.Calendar.RootMentor,
                         Constants.Activity.Employee);
 
-                    activities.Add(new ActivityInfo
+                    activities.Add(new InfoActivity
                     {
                         UserEmail = rootMentor.Email,
                         Activity = Constants.Activity.ActivityType.RootMentoring,
@@ -66,7 +66,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
                     var mentor = GetLookUpUser(_mentorList, item, Constants.Calendar.Mentor,
                         Constants.Activity.Employee);
 
-                    activities.Add(new ActivityInfo
+                    activities.Add(new InfoActivity
                     {
                         UserEmail = mentor.Email,
                         Activity = Constants.Activity.ActivityType.Mentoring,
@@ -78,7 +78,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
             catch (Exception e)
             {
-                _logger.LogError($"Fetching mentoring activities failed. {e.Message}");
+                _logger?.LogError($"Fetching mentoring activities failed. {e.Message}");
                 return null;
             }
         }

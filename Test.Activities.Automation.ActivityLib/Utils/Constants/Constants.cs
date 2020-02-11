@@ -10,7 +10,8 @@
         {
             public const string Year = "Year";
             public const string Month = "Month";
-            public const string User = "User";
+            public const string Mentor = "Mentor";
+            public const string RootMentor = "Root Mentor";
             public const string Activities = "Activities";
             public const string Employee = "Employee";
 

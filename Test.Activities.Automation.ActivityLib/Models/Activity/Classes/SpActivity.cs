@@ -7,13 +7,17 @@ namespace Test.Activities.Automation.ActivityLib.Models
     {
         public int Id { get; set; }
 
-        public SPUser User { get; set; }
+        public SPUser Mentor { get; set; }
+        
+        public SPUser RootMentor { get; set; }
 
         public int Year { get; set; }
 
         public int Month { get; set; }
 
         public List<string> Activities { get; set; }
+
+        public List<string> Paths { get; set; }
 
         public bool IsNew => Id != 0;
     }

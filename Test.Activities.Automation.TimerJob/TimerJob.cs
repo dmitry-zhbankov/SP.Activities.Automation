@@ -65,13 +65,13 @@ namespace Test.Activities.Automation.TimerJob
             }
         }
 
-        private async void SendActivities(IEnumerable<ActivityInfo> activities)
+        private async void SendActivities(IEnumerable<InfoActivity> activities)
         {
             try
             {
                 _logger?.LogInformation("Sending activities to service");
 
-                var serializer = new DataContractJsonSerializer(typeof(List<ActivityInfo>));
+                var serializer = new DataContractJsonSerializer(typeof(List<InfoActivity>));
 
                 var ms = new MemoryStream();
                 serializer.WriteObject(ms, activities);

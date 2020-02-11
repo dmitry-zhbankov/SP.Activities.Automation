@@ -13,8 +13,8 @@ namespace Test.Activities.Automation.ActivityLib.Models
 {
     public class GitLabActivitySource : ActivitySource
     {
-
         private IEnumerable<Repository> _repositories;
+
         public GitLabActivitySource(ILogger logger) : base(logger)
         {
         }
@@ -47,7 +47,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
         }
 
-        public override IEnumerable<ActivityInfo> FetchActivity()
+        public override IEnumerable<InfoActivity> FetchActivity()
         {
             _logger.LogInformation("Fetching GitLab activity");
 
@@ -66,12 +66,12 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
         }
 
-        private IEnumerable<ActivityInfo> CreateRepoActivities()
+        private IEnumerable<InfoActivity> CreateRepoActivities()
         {
-            var activities = new List<ActivityInfo>();
+            var activities = new List<InfoActivity>();
             foreach (var repo in _repositories)
                 foreach (var branch in repo.Branches)
-                    activities.AddRange(branch.Commits.Select(commit => new ActivityInfo
+                    activities.AddRange(branch.Commits.Select(commit => new InfoActivity
                     { Activity = repo.Activity, Date = DateTime.Parse(commit.Date), UserEmail = commit.AuthorEmail }));
 
             return activities.GroupBy(x => x.UserEmail).Select(x => x.First());
