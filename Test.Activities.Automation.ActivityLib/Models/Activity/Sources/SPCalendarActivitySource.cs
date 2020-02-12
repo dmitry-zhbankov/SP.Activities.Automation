@@ -56,7 +56,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
                 {
                     var paths = SPHelper.GetMultiChoiceValue(item, Constants.Activity.Paths);
 
-                    var rootMentor = SPHelper.GetLookUpUser(_rootMentorList, item, Constants.Calendar.RootMentor,
+                    var rootMentor = SPHelper.GetLookUpUserValue(_rootMentorList, item, Constants.Calendar.RootMentor,
                         Constants.Activity.Employee);
 
                     activities.Add(new ActivityInfo
@@ -67,7 +67,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
                         Paths = paths
                     });
 
-                    var mentor = SPHelper.GetLookUpUser(_mentorList, item, Constants.Calendar.Mentor,
+                    var mentor = SPHelper.GetLookUpUserValue(_mentorList, item, Constants.Calendar.Mentor,
                         Constants.Activity.Employee);
 
                     activities.Add(new ActivityInfo

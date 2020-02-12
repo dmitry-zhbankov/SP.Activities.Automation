@@ -1,58 +1,14 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using Microsoft.SharePoint;
+using Test.Activities.Automation.ActivityLib.Models.Helpers;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
-namespace Test.Activities.Automation.ActivityLib.Models
+namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncActivityService
 {
-    public class SyncActivityService
+    public partial class SyncActivityService
     {
-        private protected class ActivityKey : IEqualityComparer<ActivityKey>
-        {
-            public int UserId { get; set; }
-
-            public int Year { get; set; }
-
-            public int Month { get; set; }
-
-            public bool Equals(ActivityKey x, ActivityKey y)
-            {
-                return x.UserId == y.UserId && x.Year == y.Year && x.Month == y.Month;
-            }
-
-            public int GetHashCode(ActivityKey obj)
-            {
-                return obj.UserId ^ obj.Year ^ obj.Month;
-            }
-        }
-
-        private protected class ActivityValue
-        {
-            public int ActivityId { get; set; }
-
-            public SPUser Mentor { get; set; }
-
-            public SPUser RootMentor { get; set; }
-
-            public HashSet<string> Paths { get; set; }
-
-            public HashSet<string> Activities { get; set; }
-
-            public bool IsModified { get; set; }
-        }
-
-        private protected abstract class Member
-        {
-            public SPUser Mentor { get; set; }
-
-            public SPUser RootMentor { get; set; }
-
-            public IEnumerable<string> Paths { get; set; }
-        }
-
         private ILogger _logger;
 
         public SyncActivityService(ILogger logger)
@@ -81,9 +37,40 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
         private IEnumerable<Member> GetSpMembers(SPWeb web)
         {
-            List<Member> members = new List<Member>();
+            try
+            {
+                _logger?.LogInformation("Getting existing members from SP");
 
-            return members;
+                var spMentorsList = web.Lists.TryGetList(Constants.Lists.Mentors);
+                if (spMentorsList == null) throw new Exception("Getting SP mentor list failed");
+
+                var spRootMentorsList = web.Lists.TryGetList(Constants.Lists.Mentors);
+                if (spRootMentorsList == null) throw new Exception("Getting SP root mentor list failed");
+
+                var members = new List<Member>();
+
+                foreach (var item in spMentorsList.GetItems().Cast<SPListItem>())
+                {
+                    var mentor = SPHelper.GetUserValue(item, Constants.Activity.Mentor);
+
+                    var rootMentor = SPHelper.GetUserValue(item, Constants.Activity.RootMentor);
+
+                    var paths = SPHelper.GetMultiChoiceValue(item, Constants.Activity.Paths);
+
+                    members.Add(new Member
+                    {
+                        RootMentor = rootMentor,
+                        Mentor = mentor,
+                        Paths = new List<string>(paths)
+                    });
+                }
+
+                return members;
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Getting existing members from SP failed. {e.Message}");
+            }
         }
 
         private Dictionary<ActivityKey, ActivityValue> Ensure(IEnumerable<SpActivity> spActivities, IEnumerable<ActivityInfo> activities, IEnumerable<Member> members)
@@ -92,65 +79,70 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
             foreach (var activity in activities)
             {
-                var key = new ActivityKey()
-                {
-                    UserId = activity.UserId,
-                    Year = activity.Date.Year,
-                    Month = activity.Date.Month
-                };
-
-                if (dict.ContainsKey(key))
-                {
-                    var value = dict[key];
-                    if (!value.Activities.Contains(activity.Activity))
-                    {
-                        value.Activities.Add(activity.Activity);
-                        dict[key].IsModified = true;
-                    }
-
-                    var set = new HashSet<string>(activity.Paths);
-                    set.ExceptWith(value.Paths);
-
-                    if (set.Count > 0)
-                    {
-                        foreach (var item in set)
-                        {
-                            value.Paths.Add(item);
-                        }
-                        dict[key].IsModified = true;
-                    }
-                }
-                else
-                {
-                    var newMember = members.FirstOrDefault(x =>
-                        x.Mentor?.ID == activity.UserId || x.RootMentor?.ID == activity.UserId);
-
-                    if (newMember != null)
-                    {
-                        var newKey = new ActivityKey()
-                        {
-                            UserId = activity.UserId,
-                            Year = activity.Date.Year,
-                            Month = activity.Date.Month
-                        };
-                        var newValue = new ActivityValue()
-                        {
-                            Activities = new HashSet<string>()
-                            {
-                                activity.Activity
-                            },
-                            Paths = new HashSet<string>(activity.Paths),
-                            Mentor = newMember.Mentor,
-                            RootMentor = newMember.RootMentor,
-                            IsModified = true
-                        };
-
-                        dict.Add(newKey, newValue);
-                    }
-                }
+                UpdateDictionary(dict,activity, members);
             }
 
             return dict;
+        }
+
+        private void UpdateDictionary(Dictionary<ActivityKey,ActivityValue> dict, ActivityInfo activity, IEnumerable<Member> members)
+        {
+            var key = new ActivityKey()
+            {
+                UserId = activity.UserId,
+                Year = activity.Date.Year,
+                Month = activity.Date.Month
+            };
+
+            if (dict.ContainsKey(key))
+            {
+                var value = dict[key];
+                if (!value.Activities.Contains(activity.Activity))
+                {
+                    value.Activities.Add(activity.Activity);
+                    dict[key].IsModified = true;
+                }
+
+                var set = new HashSet<string>(activity.Paths);
+                set.ExceptWith(value.Paths);
+
+                if (set.Count > 0)
+                {
+                    foreach (var item in set)
+                    {
+                        value.Paths.Add(item);
+                    }
+                    dict[key].IsModified = true;
+                }
+            }
+            else
+            {
+                var newMember = members.FirstOrDefault(x =>
+                    x.Mentor?.ID == activity.UserId || x.RootMentor?.ID == activity.UserId);
+
+                if (newMember != null)
+                {
+                    var newKey = new ActivityKey()
+                    {
+                        UserId = activity.UserId,
+                        Year = activity.Date.Year,
+                        Month = activity.Date.Month
+                    };
+                    var newValue = new ActivityValue()
+                    {
+                        Activities = new HashSet<string>()
+                            {
+                                activity.Activity
+                            },
+                        Paths = new HashSet<string>(activity.Paths),
+                        Mentor = newMember.Mentor,
+                        RootMentor = newMember.RootMentor,
+                        IsModified = true
+                    };
+
+                    dict.Add(newKey, newValue);
+                }
+            }
         }
 
         Dictionary<ActivityKey, ActivityValue> InitDictionary(IEnumerable<SpActivity> spActivities)
@@ -205,26 +197,14 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
                 foreach (var item in spList.GetItems().Cast<SPListItem>())
                 {
-                    var mentorField = item.Fields.GetField(Constants.Activity.Mentor);
-                    var mentorFieldValue =
-                        mentorField.GetFieldValue(item[Constants.Activity.Mentor].ToString()) as SPFieldUserValue;
-                    var mentor = mentorFieldValue?.User;
+                    var mentor = SPHelper.GetUserValue(item, Constants.Activity.Mentor);
+                    var rootMentor = SPHelper.GetUserValue(item, Constants.Activity.RootMentor);
 
-                    var rootMentorField = item.Fields.GetField(Constants.Activity.RootMentor);
-                    var rootMentorFieldValue =
-                        rootMentorField.GetFieldValue(item[Constants.Activity.RootMentor].ToString()) as SPFieldUserValue;
-                    var rootMentor = rootMentorFieldValue?.User;
+                    var month = SPHelper.GetIntValue(item, Constants.Activity.Month);
+                    var year = SPHelper.GetIntValue(item, Constants.Activity.Year);
 
-                    var month = Convert.ToInt32(item[Constants.Activity.Month]);
-                    var year = Convert.ToInt32(item[Constants.Activity.Year]);
-
-                    var activityField = item.Fields.GetField(Constants.Activity.Activities);
-                    var activityFieldValue =
-                        activityField.GetFieldValue(item[Constants.Activity.Activities].ToString()) as
-                            SPFieldMultiChoiceValue;
-
-                    var activities = new List<string>();
-                    for (var i = 0; i < activityFieldValue.Count; i++) activities.Add(activityFieldValue[i]);
+                    var activities = SPHelper.GetMultiChoiceValue(item, Constants.Activity.Activities);
+                    var paths = SPHelper.GetMultiChoiceValue(item, Constants.Activity.Paths);
 
                     spActivities.Add(new SpActivity
                     {
@@ -232,7 +212,8 @@ namespace Test.Activities.Automation.ActivityLib.Models
                         Mentor = mentor,
                         Month = month,
                         Year = year,
-                        Activities = activities,
+                        Activities = new List<string>(activities),
+                        Paths=new List<string>(paths),
                         Id = item.ID,
                     });
                 }
@@ -292,11 +273,9 @@ namespace Test.Activities.Automation.ActivityLib.Models
             newItem[Constants.Activity.RootMentor] = item.RootMentor;
             newItem[Constants.Activity.Month] = item.Month;
             newItem[Constants.Activity.Year] = item.Year;
-            var newActivitiesValue = new SPFieldMultiChoiceValue();
 
-            foreach (var itemActivity in item.Activities) newActivitiesValue.Add(itemActivity);
-
-            newItem[Constants.Activity.Activities] = newActivitiesValue;
+            SPHelper.SetMultiChoiceValue(newItem, Constants.Activity.Activities, item.Activities);
+            SPHelper.SetMultiChoiceValue(newItem, Constants.Activity.Paths, item.Paths);
 
             newItem.Update();
         }
@@ -304,16 +283,22 @@ namespace Test.Activities.Automation.ActivityLib.Models
         private void UpdateActivity(SPList spList, SpActivity item)
         {
             var itemToUpdate = spList.Items.GetItemById(item.Id);
-            var activityField = itemToUpdate.Fields.GetField(Constants.Activity.Activities);
-            var activityFieldValue =
-                activityField.GetFieldValue(itemToUpdate[Constants.Activity.Activities].ToString()) as
-                    SPFieldMultiChoiceValue;
 
-            for (var i = 0; i < activityFieldValue.Count; i++) item.Activities.Remove(activityFieldValue[i]);
+            SPHelper.SetMultiChoiceValue(itemToUpdate, Constants.Activity.Activities, item.Activities);
+            SPHelper.SetMultiChoiceValue(itemToUpdate, Constants.Activity.Paths, item.Paths);
 
-            foreach (var newItemActivity in item.Activities) activityFieldValue.Add(newItemActivity);
+            itemToUpdate.Update();
 
-            activityField.Update();
+            //var activityField = itemToUpdate.Fields.GetField(Constants.Activity.Activities);
+            //var activityFieldValue =
+            //    activityField.GetFieldValue(itemToUpdate[Constants.Activity.Activities].ToString()) as
+            //        SPFieldMultiChoiceValue;
+
+            //for (var i = 0; i < activityFieldValue.Count; i++) item.Activities.Remove(activityFieldValue[i]);
+
+            //foreach (var newItemActivity in item.Activities) activityFieldValue.Add(newItemActivity);
+
+            //activityField.Update();
         }
     }
 }

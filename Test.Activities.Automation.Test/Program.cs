@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Test.Activities.Automation.ActivityLib.Models;
+using Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncActivityService;
 
 namespace Test.Activities.Automation.Test
 {

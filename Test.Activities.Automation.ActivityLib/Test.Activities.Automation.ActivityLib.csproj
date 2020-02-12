@@ -50,15 +50,22 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\Activity\Classes\ActivityInfo.cs" />
+    <Compile Include="Models\Activity\Services\SyncActivityService\SyncActivityService.ActivityKey.cs" />
+    <Compile Include="Models\Activity\Services\SyncActivityService\SyncActivityService.ActivityValue.cs" />
+    <Compile Include="Models\Activity\Services\SyncActivityService\SyncActivityService.Member.cs" />
     <Compile Include="Models\Activity\Sources\ActivitySource.cs" />
     <Compile Include="Models\Activity\Services\FetchActivityService.cs" />
-    <Compile Include="Models\Activity\Sources\GitLabActivitySource.cs" />
+    <Compile Include="Models\Activity\Sources\GitLabActivitySource\GitLabActivitySource.Commit.cs" />
+    <Compile Include="Models\Activity\Sources\GitLabActivitySource\GitLabActivitySource.cs" />
+    <Compile Include="Models\Activity\Sources\GitLabActivitySource\GitLabActivitySource.Branch.cs" />
+    <Compile Include="Models\Activity\Sources\GitLabActivitySource\GitLabActivitySource.Repository.cs" />
     <Compile Include="Models\Activity\Sources\SPCalendarActivitySource.cs" />
+    <Compile Include="Models\Helpers\APIHelper.cs" />
     <Compile Include="Models\Helpers\SPHelper.cs" />
     <Compile Include="Utils\Constants\Constants.cs" />
     <Compile Include="Models\Logger\ILogger.cs" />
     <Compile Include="Models\Activity\Classes\SpActivity.cs" />
-    <Compile Include="Models\Activity\Services\SyncActivityService.cs" />
+    <Compile Include="Models\Activity\Services\SyncActivityService\SyncActivityService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

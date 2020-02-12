@@ -9,7 +9,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Helpers
 {
     public static class SPHelper
     {
-        public static SPUser GetLookUpUser(SPList originList, SPListItem item, string lookUpField, string originField)
+        public static SPUser GetLookUpUserValue(SPList originList, SPListItem item, string lookUpField, string originField)
         {
             var userLookUpField = item.Fields.GetField(lookUpField);
             var userFieldLookUpValue =
@@ -22,13 +22,30 @@ namespace Test.Activities.Automation.ActivityLib.Models.Helpers
             return rootMentorFieldValue.User;
         }
 
+        public static SPUser GetUserValue(SPListItem item, string userField)
+        {
+            var field = item.Fields.GetField(userField);
+            var fieldValue =
+                field.GetFieldValue(item[userField].ToString()) as SPFieldUserValue;
+            var user = fieldValue?.User;
+
+            return user;
+        }
+
+        public static int GetIntValue(SPListItem item, string field)
+        {
+            var res = Convert.ToInt32(item[field]);
+
+            return res;
+        }
+
         public static IEnumerable<string> GetMultiChoiceValue(SPListItem item, string fieldName)
         {
             var field = item.Fields.GetField(fieldName);
             var fieldValue =
                 field.GetFieldValue(item[fieldName].ToString()) as
                     SPFieldMultiChoiceValue;
-            
+
             var res = new List<string>();
             for (int i = 0; i < fieldValue.Count; i++)
             {
@@ -36,6 +53,13 @@ namespace Test.Activities.Automation.ActivityLib.Models.Helpers
             }
 
             return res;
+        }
+
+        public static void SetMultiChoiceValue(SPListItem item, string multiChoiceField, IEnumerable<string> multiChoiceValue)
+        {
+            var value = new SPFieldMultiChoiceValue();
+            foreach (var choiceValue in multiChoiceValue) value.Add(choiceValue);
+            item[multiChoiceField] = value;
         }
     }
 }

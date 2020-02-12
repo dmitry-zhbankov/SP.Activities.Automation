@@ -6,6 +6,7 @@ using System.ServiceModel.Activation;
 using Microsoft.SharePoint;
 using Test.Activities.Automation.ActivityLib;
 using Test.Activities.Automation.ActivityLib.Models;
+using Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncActivityService;
 
 namespace Test.Activities.Automation.WCFService
 {

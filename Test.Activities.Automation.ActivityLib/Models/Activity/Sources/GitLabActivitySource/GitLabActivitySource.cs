@@ -4,14 +4,14 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using Microsoft.SharePoint;
+using Test.Activities.Automation.ActivityLib.Models.Helpers;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
 namespace Test.Activities.Automation.ActivityLib.Models
 {
-    public class GitLabActivitySource : ActivitySource
+    public partial class GitLabActivitySource : ActivitySource
     {
         private IEnumerable<Repository> _repositories;
 
@@ -143,7 +143,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
                     }
                 );
 
-                return GetApiCollection<Commit>(url, client);
+                return APIHelper.GetApiCollection<Commit>(url, client);
             }
             catch (Exception e)
             {
@@ -158,78 +158,12 @@ namespace Test.Activities.Automation.ActivityLib.Models
                 var url =
                     $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Branches}";
 
-                return GetApiCollection<Branch>(url, client);
+                return APIHelper.GetApiCollection<Branch>(url, client);
             }
             catch (Exception e)
             {
                 throw new Exception($"Getting branches failed. {e.Message}");
             }
-        }
-
-        private IEnumerable<T> GetApiCollection<T>(string url, HttpClient client) where T : class
-        {
-            var response = client.GetAsync(url).Result;
-            var stream = response.Content.ReadAsStreamAsync().Result;
-
-            var res = new List<T>();
-
-            var reader = new StreamReader(stream);
-            stream.Position = 0;
-
-            var ch = reader.Read();
-            if (ch == '[')
-            {
-                var multiple = JsonDeserialize<T[]>(stream);
-                res.AddRange(multiple);
-
-                return res;
-            }
-
-            var single = JsonDeserialize<T>(stream);
-            res.Add(single);
-
-            return res;
-        }
-
-        private T JsonDeserialize<T>(Stream stream) where T : class
-        {
-            var serializer = new DataContractJsonSerializer(typeof(T));
-
-            stream.Position = 0;
-            var res = serializer.ReadObject(stream) as T;
-            return res;
-        }
-
-        [DataContract]
-        private protected class Commit
-        {
-            [DataMember(Name = "author_email")]
-            public string AuthorEmail { get; set; }
-
-            [DataMember(Name = "created_at")]
-            public string Date { get; set; }
-        }
-
-        [DataContract]
-        private protected class Branch
-        {
-            [DataMember(Name = "name")]
-            public string Name { get; set; }
-
-            public List<Commit> Commits { get; set; }
-        }
-
-        private protected class Repository
-        {
-            public string Host { get; set; }
-
-            public string Activity { get; set; }
-
-            public string ProjectId { get; set; }
-
-            public List<Branch> Branches { get; set; }
-
-            public List<string> Paths { get; set; }
         }
     }
 }
