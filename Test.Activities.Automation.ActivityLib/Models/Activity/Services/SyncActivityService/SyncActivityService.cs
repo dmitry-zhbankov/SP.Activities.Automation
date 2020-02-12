@@ -16,22 +16,29 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
             _logger = logger;
         }
 
-        public void Sync(IEnumerable<ActivityInfo> activities)
+        public void SyncActivities(IEnumerable<ActivityInfo> activities)
         {
-            _logger?.LogInformation("Synchronizing activities");
-
-            using (var site = new SPSite(Constants.Host))
-            using (var web = site.OpenWeb(Constants.Web))
+            try
             {
-                var spActivities = GetSpActivities(web);
+                _logger?.LogInformation("Synchronizing activities");
 
-                var members = GetSpMembers(web);
+                using (var site = new SPSite(Constants.Host))
+                using (var web = site.OpenWeb(Constants.Web))
+                {
+                    var spActivities = GetSpActivities(web);
 
-                var compareDict = Ensure(spActivities, activities, members);
+                    var members = GetSpMembers(web);
 
-                web.AllowUnsafeUpdates = true;
+                    var compareDict = Ensure(spActivities, activities, members);
 
-                UpdateSpActivities(compareDict, web);
+                    web.AllowUnsafeUpdates = true;
+
+                    UpdateSpActivities(compareDict, web);
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Synchronizing activities failed. {e.Message}");
             }
         }
 
@@ -100,14 +107,23 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
 
         private Dictionary<ActivityKey, ActivityValue> Ensure(IEnumerable<SpActivity> spActivities, IEnumerable<ActivityInfo> activities, IEnumerable<Member> members)
         {
-            var dict = InitDictionary(spActivities);
-
-            foreach (var activity in activities)
+            try
             {
-                UpdateDictionary(dict, activity, members);
-            }
+                _logger?.LogInformation("Ensuring activities");
 
-            return dict;
+                var dict = InitDictionary(spActivities);
+
+                foreach (var activity in activities)
+                {
+                    UpdateDictionary(dict, activity, members);
+                }
+
+                return dict;
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Ensuring activities failed. {e.Message}");
+            }
         }
 
         bool CheckActivityUser(ActivityInfo activity, IEnumerable<Member> members)
@@ -370,17 +386,6 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
             SPHelper.SetMultiChoiceValue(itemToUpdate, Constants.Activity.Paths, item.Paths);
 
             itemToUpdate.Update();
-
-            //var activityField = itemToUpdate.Fields.GetField(Constants.Activity.Activities);
-            //var activityFieldValue =
-            //    activityField.GetFieldValue(itemToUpdate[Constants.Activity.Activities].ToString()) as
-            //        SPFieldMultiChoiceValue;
-
-            //for (var i = 0; i < activityFieldValue.Count; i++) item.Activities.Remove(activityFieldValue[i]);
-
-            //foreach (var newItemActivity in item.Activities) activityFieldValue.Add(newItemActivity);
-
-            //activityField.Update();
         }
     }
 }

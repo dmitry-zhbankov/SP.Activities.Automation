@@ -4,7 +4,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
 {
     public partial class SyncActivityService
     {
-        private protected class ActivityKey : IEqualityComparer<ActivityKey>
+        private protected class ActivityKey
         {
             public int UserId { get; set; }
 
@@ -12,14 +12,19 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
 
             public int Month { get; set; }
 
-            public bool Equals(ActivityKey x, ActivityKey y)
+            public override int GetHashCode()
             {
-                return x.UserId == y.UserId && x.Year == y.Year && x.Month == y.Month;
+                return UserId ^ Year ^ Month;
             }
 
-            public int GetHashCode(ActivityKey obj)
+            public override bool Equals(object obj)
             {
-                return obj.UserId ^ obj.Year ^ obj.Month;
+                if (obj is ActivityKey otherObj)
+                {
+                    return UserId == otherObj.UserId && Year == otherObj.Year && Month == otherObj.Month;
+                }
+
+                return false;
             }
         }
     }

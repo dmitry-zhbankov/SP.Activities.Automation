@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.ServiceModel.Activation;
-using Microsoft.SharePoint;
-using Test.Activities.Automation.ActivityLib;
 using Test.Activities.Automation.ActivityLib.Models;
 using Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncActivityService;
 
@@ -38,7 +35,7 @@ namespace Test.Activities.Automation.WCFService
                 {
                     var spActivityService = new SyncActivityService(_logger);
 
-                    spActivityService.Sync(activities);
+                    spActivityService.SyncActivities(activities);
 
                     _logger.LogInformation("Request has been treated successfully");
                 }

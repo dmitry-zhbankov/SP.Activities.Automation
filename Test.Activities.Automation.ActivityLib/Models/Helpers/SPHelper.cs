@@ -19,7 +19,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Helpers
                 userFieldLookUpValue =
                     userLookUpField.GetFieldValue(item[lookUpField].ToString()) as SPFieldLookupValue;
             }
-            catch (NullReferenceException e)
+            catch (NullReferenceException)
             {
                 return null;
             }
@@ -43,7 +43,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Helpers
                 userFieldLookUpValue =
                     userLookUpField.GetFieldValue(item[lookUpField].ToString()) as SPFieldLookupValue;
             }
-            catch (NullReferenceException e)
+            catch (NullReferenceException)
             {
                 return null;
             }

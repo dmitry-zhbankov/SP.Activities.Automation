@@ -1,17 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.SharePoint;
 using Microsoft.SharePoint.Administration;
-using Test.Activities.Automation.ActivityLib;
 using Test.Activities.Automation.ActivityLib.Models;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
@@ -49,7 +44,7 @@ namespace Test.Activities.Automation.TimerJob
                 {
                     var activityService=new FetchActivityService(_logger);
 
-                    var activities = activityService.GetActivities();
+                    var activities = activityService.FetchActivities();
 
                     SendActivities(activities);
                 }

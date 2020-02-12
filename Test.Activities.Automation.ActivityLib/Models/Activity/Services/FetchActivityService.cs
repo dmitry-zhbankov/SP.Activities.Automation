@@ -13,8 +13,10 @@ namespace Test.Activities.Automation.ActivityLib.Models
             _logger = logger;
         }
 
-        public IEnumerable<ActivityInfo> GetActivities()
+        public IEnumerable<ActivityInfo> FetchActivities()
         {
+            _logger?.LogInformation("Fetching activities");
+
             var devActivities = GetDevActivities();
 
             var mentoringActivities = GetMentoringActivities();

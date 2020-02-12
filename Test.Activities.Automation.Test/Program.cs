@@ -22,11 +22,11 @@ namespace Test.Activities.Automation.Test
                 {
                     var activityService = new FetchActivityService(logger);
 
-                    var activities = activityService.GetActivities();
+                    var activities = activityService.FetchActivities();
 
                     var spActivityService=new SyncActivityService(logger);
 
-                    spActivityService.Sync(activities);
+                    spActivityService.SyncActivities(activities);
                 }
                 catch (Exception e)
                 {
