@@ -25,7 +25,7 @@ namespace Test.Activities.Automation.WCFService
             }
         }
 
-        public HttpStatusCode FillActivities(IEnumerable<InfoActivity> activities)
+        public HttpStatusCode FillActivities(IEnumerable<ActivityInfo> activities)
         {
             var statusCode = HttpStatusCode.Accepted;
 

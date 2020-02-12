@@ -43,34 +43,46 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
         }
 
-        public override IEnumerable<InfoActivity> FetchActivity()
+        public override IEnumerable<ActivityInfo> FetchActivity()
         {
             _logger?.LogInformation("Fetching mentoring activities");
             
             try
             {
-                var activities = new List<InfoActivity>();
+                var activities = new List<ActivityInfo>();
 
                 foreach (var item in _events)
                 {
+                    var pathsField = item.Fields.GetField(Constants.Activity.Paths);
+                    var pathsFieldValue =
+                        pathsField.GetFieldValue(item[Constants.Activity.Paths].ToString()) as
+                            SPFieldMultiChoiceValue;
+                    var paths=new List<string>();
+                    for (int i = 0; i < pathsFieldValue.Count; i++)
+                    {
+                        paths.Add(pathsFieldValue[i]);
+                    }
+
                     var rootMentor = GetLookUpUser(_rootMentorList, item, Constants.Calendar.RootMentor,
                         Constants.Activity.Employee);
 
-                    activities.Add(new InfoActivity
+                    activities.Add(new ActivityInfo
                     {
                         UserEmail = rootMentor.Email,
                         Activity = Constants.Activity.ActivityType.RootMentoring,
-                        Date = _yesterday
+                        Date = _yesterday,
+                        Paths = paths
                     });
 
                     var mentor = GetLookUpUser(_mentorList, item, Constants.Calendar.Mentor,
                         Constants.Activity.Employee);
 
-                    activities.Add(new InfoActivity
+                    activities.Add(new ActivityInfo
                     {
                         UserEmail = mentor.Email,
                         Activity = Constants.Activity.ActivityType.Mentoring,
-                        Date = _yesterday
+                        Date = _yesterday,
+                        Paths = paths
                     });
                 }
 

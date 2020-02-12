@@ -14,6 +14,7 @@
             public const string RootMentor = "Root Mentor";
             public const string Activities = "Activities";
             public const string Employee = "Employee";
+            public const string Paths = "Paths";
 
             public static class ActivityType
             {

@@ -49,7 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Models\Activity\Classes\InfoActivity.cs" />
+    <Compile Include="Models\Activity\Classes\ActivityInfo.cs" />
     <Compile Include="Models\Activity\Sources\ActivitySource.cs" />
     <Compile Include="Models\Activity\Services\FetchActivityService.cs" />
     <Compile Include="Models\Activity\Sources\GitLabActivitySource.cs" />

@@ -15,6 +15,6 @@ namespace Test.Activities.Automation.WCFService
             RequestFormat = WebMessageFormat.Json,
             ResponseFormat = WebMessageFormat.Json,
             BodyStyle = WebMessageBodyStyle.Bare)]
-        HttpStatusCode FillActivities(IEnumerable<InfoActivity> activities);
+        HttpStatusCode FillActivities(IEnumerable<ActivityInfo> activities);
     }
 }

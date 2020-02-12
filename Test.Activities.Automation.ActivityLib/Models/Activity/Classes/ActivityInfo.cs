@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 namespace Test.Activities.Automation.ActivityLib.Models
 {
     [DataContract]
-    public class InfoActivity
+    public class ActivityInfo
     {
         public int UserId { get; set; }
 

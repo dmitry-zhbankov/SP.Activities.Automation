@@ -60,7 +60,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             _logger = logger;
         }
 
-        public void Sync(IEnumerable<InfoActivity> activities)
+        public void Sync(IEnumerable<ActivityInfo> activities)
         {
             _logger?.LogInformation("Synchronizing activities");
 
@@ -86,7 +86,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             return members;
         }
 
-        private Dictionary<ActivityKey, ActivityValue> Ensure(IEnumerable<SpActivity> spActivities, IEnumerable<InfoActivity> activities, IEnumerable<Member> members)
+        private Dictionary<ActivityKey, ActivityValue> Ensure(IEnumerable<SpActivity> spActivities, IEnumerable<ActivityInfo> activities, IEnumerable<Member> members)
         {
             var dict = InitDictionary(spActivities);
 

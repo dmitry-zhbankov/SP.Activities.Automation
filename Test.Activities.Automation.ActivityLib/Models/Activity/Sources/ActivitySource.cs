@@ -17,6 +17,6 @@ namespace Test.Activities.Automation.ActivityLib.Models
         {
         }
 
-        public abstract IEnumerable<InfoActivity> FetchActivity();
+        public abstract IEnumerable<ActivityInfo> FetchActivity();
     }
 }

@@ -13,7 +13,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             _logger = logger;
         }
 
-        public IEnumerable<InfoActivity> GetActivities()
+        public IEnumerable<ActivityInfo> GetActivities()
         {
             var devActivities = GetDevActivities();
 
@@ -22,7 +22,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             return devActivities.Concat(mentoringActivities).ToList();
         }
         
-        public IEnumerable<InfoActivity> GetDevActivities()
+        public IEnumerable<ActivityInfo> GetDevActivities()
         {
             try
             {
@@ -35,11 +35,11 @@ namespace Test.Activities.Automation.ActivityLib.Models
             catch (Exception e)
             {
                 _logger?.LogError($"Getting dev activities failed. {e.Message}");
-                return new List<InfoActivity>();
+                return new List<ActivityInfo>();
             }
         }
         
-        public  IEnumerable<InfoActivity> GetMentoringActivities()
+        public  IEnumerable<ActivityInfo> GetMentoringActivities()
         {
             try
             {
@@ -52,7 +52,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             catch (Exception e)
             {
                 _logger?.LogError($"Getting mentoring activities failed. {e.Message}");
-                return new List<InfoActivity>();
+                return new List<ActivityInfo>();
             }
         }
     }

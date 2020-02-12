@@ -38,7 +38,14 @@ namespace Test.Activities.Automation.ActivityLib.Models
                     .Select(item => item[Constants.Configuration.Value] as string)
                     .Select(value =>
                         value.Split(new[] { Constants.Configuration.Separator }, StringSplitOptions.RemoveEmptyEntries))
-                    .Select(str => new Repository { Host = str[0], ProjectId = str[1], Activity = str[2] })
+                    .Select(str =>
+                        new Repository
+                        {
+                            Host = str[0],
+                            ProjectId = str[1],
+                            Activity = str[2],
+                            Paths = new List<string>(str[3].Split(';'))
+                        })
                     .ToList();
             }
             catch (Exception e)
@@ -47,7 +54,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
         }
 
-        public override IEnumerable<InfoActivity> FetchActivity()
+        public override IEnumerable<ActivityInfo> FetchActivity()
         {
             _logger.LogInformation("Fetching GitLab activity");
 
@@ -66,13 +73,19 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
         }
 
-        private IEnumerable<InfoActivity> CreateRepoActivities()
+        private IEnumerable<ActivityInfo> CreateRepoActivities()
         {
-            var activities = new List<InfoActivity>();
+            var activities = new List<ActivityInfo>();
             foreach (var repo in _repositories)
                 foreach (var branch in repo.Branches)
-                    activities.AddRange(branch.Commits.Select(commit => new InfoActivity
-                    { Activity = repo.Activity, Date = DateTime.Parse(commit.Date), UserEmail = commit.AuthorEmail }));
+                    activities.AddRange(branch.Commits.Select(commit =>
+                        new ActivityInfo
+                        {
+                            Activity = repo.Activity,
+                            Date = DateTime.Parse(commit.Date),
+                            UserEmail = commit.AuthorEmail,
+                            Paths = repo.Paths
+                        }));
 
             return activities.GroupBy(x => x.UserEmail).Select(x => x.First());
         }
@@ -120,11 +133,15 @@ namespace Test.Activities.Automation.ActivityLib.Models
         {
             try
             {
-                var url =
-                    $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Commits}" +
-                    $"?{Constants.GitLab.Branch}{branch.Name}" +
-                    $"&{Constants.GitLab.Since}{DateTime.Now.AddDays(-1).Date:yyyy-MM-dd}" +
-                    $"&{Constants.GitLab.Until}{DateTime.Now.Date:yyyy-MM-dd}";
+                var url = string.Concat(
+                    new[]
+                    {
+                        $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Commits}",
+                        $"?{Constants.GitLab.Branch}{branch.Name}",
+                        $"&{Constants.GitLab.Since}{DateTime.Now.AddDays(-1).Date:yyyy-MM-dd}",
+                        //$"&{Constants.GitLab.Until}{DateTime.Now.Date:yyyy-MM-dd}"    for debug purposes
+                    }
+                );
 
                 return GetApiCollection<Commit>(url, client);
             }
@@ -211,6 +228,8 @@ namespace Test.Activities.Automation.ActivityLib.Models
             public string ProjectId { get; set; }
 
             public List<Branch> Branches { get; set; }
+
+            public List<string> Paths { get; set; }
         }
     }
 }
