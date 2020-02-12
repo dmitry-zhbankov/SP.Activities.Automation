@@ -54,6 +54,7 @@
     <Compile Include="Models\Activity\Services\FetchActivityService.cs" />
     <Compile Include="Models\Activity\Sources\GitLabActivitySource.cs" />
     <Compile Include="Models\Activity\Sources\SPCalendarActivitySource.cs" />
+    <Compile Include="Models\Helpers\SPHelper.cs" />
     <Compile Include="Utils\Constants\Constants.cs" />
     <Compile Include="Models\Logger\ILogger.cs" />
     <Compile Include="Models\Activity\Classes\SpActivity.cs" />

@@ -208,12 +208,12 @@ namespace Test.Activities.Automation.ActivityLib.Models
                     var mentorField = item.Fields.GetField(Constants.Activity.Mentor);
                     var mentorFieldValue =
                         mentorField.GetFieldValue(item[Constants.Activity.Mentor].ToString()) as SPFieldUserValue;
-                    var mentor = mentorFieldValue.User;
+                    var mentor = mentorFieldValue?.User;
 
                     var rootMentorField = item.Fields.GetField(Constants.Activity.RootMentor);
                     var rootMentorFieldValue =
                         rootMentorField.GetFieldValue(item[Constants.Activity.RootMentor].ToString()) as SPFieldUserValue;
-                    var rootMentor = rootMentorFieldValue.User;
+                    var rootMentor = rootMentorFieldValue?.User;
 
                     var month = Convert.ToInt32(item[Constants.Activity.Month]);
                     var year = Convert.ToInt32(item[Constants.Activity.Year]);

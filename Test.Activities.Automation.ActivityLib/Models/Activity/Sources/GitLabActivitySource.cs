@@ -139,7 +139,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
                         $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Commits}",
                         $"?{Constants.GitLab.Branch}{branch.Name}",
                         $"&{Constants.GitLab.Since}{DateTime.Now.AddDays(-1).Date:yyyy-MM-dd}",
-                        //$"&{Constants.GitLab.Until}{DateTime.Now.Date:yyyy-MM-dd}"    for debug purposes
+                        //$"&{Constants.GitLab.Until}{DateTime.Now.Date:yyyy-MM-dd}"    commented for debug purposes
                     }
                 );
 

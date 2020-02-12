@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.SharePoint;
+using Test.Activities.Automation.ActivityLib.Models.Helpers;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
 namespace Test.Activities.Automation.ActivityLib.Models
@@ -53,17 +54,9 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
                 foreach (var item in _events)
                 {
-                    var pathsField = item.Fields.GetField(Constants.Activity.Paths);
-                    var pathsFieldValue =
-                        pathsField.GetFieldValue(item[Constants.Activity.Paths].ToString()) as
-                            SPFieldMultiChoiceValue;
-                    var paths=new List<string>();
-                    for (int i = 0; i < pathsFieldValue.Count; i++)
-                    {
-                        paths.Add(pathsFieldValue[i]);
-                    }
+                    var paths = SPHelper.GetMultiChoiceValue(item, Constants.Activity.Paths);
 
-                    var rootMentor = GetLookUpUser(_rootMentorList, item, Constants.Calendar.RootMentor,
+                    var rootMentor = SPHelper.GetLookUpUser(_rootMentorList, item, Constants.Calendar.RootMentor,
                         Constants.Activity.Employee);
 
                     activities.Add(new ActivityInfo
@@ -74,7 +67,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
                         Paths = paths
                     });
 
-                    var mentor = GetLookUpUser(_mentorList, item, Constants.Calendar.Mentor,
+                    var mentor = SPHelper.GetLookUpUser(_mentorList, item, Constants.Calendar.Mentor,
                         Constants.Activity.Employee);
 
                     activities.Add(new ActivityInfo
@@ -93,19 +86,6 @@ namespace Test.Activities.Automation.ActivityLib.Models
                 _logger?.LogError($"Fetching mentoring activities failed. {e.Message}");
                 return null;
             }
-        }
-
-        SPUser GetLookUpUser(SPList originList, SPListItem item, string lookUpField, string originField)
-        {
-            var userLookUpField = item.Fields.GetField(lookUpField);
-            var userFieldLookUpValue =
-                userLookUpField.GetFieldValue(item[lookUpField].ToString()) as SPFieldLookupValue;
-            var rootMentorField = originList.Fields.GetField(originField);
-            var rootMentorItem = originList.GetItemById(userFieldLookUpValue.LookupId);
-            var rootMentorFieldValue =
-                rootMentorField.GetFieldValue(rootMentorItem[originField].ToString()) as SPFieldUserValue;
-
-            return rootMentorFieldValue.User;
         }
     }
 }
