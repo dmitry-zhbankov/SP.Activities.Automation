@@ -44,25 +44,44 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
                 var spMentorsList = web.Lists.TryGetList(Constants.Lists.Mentors);
                 if (spMentorsList == null) throw new Exception("Getting SP mentor list failed");
 
-                var spRootMentorsList = web.Lists.TryGetList(Constants.Lists.Mentors);
+                var spRootMentorsList = web.Lists.TryGetList(Constants.Lists.RootMentors);
                 if (spRootMentorsList == null) throw new Exception("Getting SP root mentor list failed");
 
                 var members = new List<Member>();
 
                 foreach (var item in spMentorsList.GetItems().Cast<SPListItem>())
                 {
-                    var mentor = SPHelper.GetUserValue(item, Constants.Activity.Mentor);
-
-                    var rootMentor = SPHelper.GetUserValue(item, Constants.Activity.RootMentor);
+                    var mentor = SPHelper.GetUserValue(item, Constants.Activity.Employee);
 
                     var paths = SPHelper.GetMultiChoiceValue(item, Constants.Activity.Paths);
 
                     members.Add(new Member
                     {
-                        RootMentor = rootMentor,
                         Mentor = mentor,
                         Paths = new List<string>(paths)
                     });
+                }
+
+                foreach (var item in spRootMentorsList.GetItems().Cast<SPListItem>())
+                {
+                    var rootMentor = SPHelper.GetUserValue(item, Constants.Activity.Employee);
+
+                    var paths = SPHelper.GetMultiChoiceValue(item, Constants.Activity.Paths);
+
+                    var member = members.FirstOrDefault(x => x.Mentor.ID == rootMentor.ID);
+
+                    if (member!=null)
+                    {
+                        member.RootMentor = rootMentor;
+                    }
+                    else
+                    {
+                        members.Add(new Member
+                        {
+                            RootMentor = rootMentor,
+                            Paths = new List<string>(paths)
+                        });
+                    }
                 }
 
                 return members;
@@ -190,15 +209,21 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
             {
                 _logger?.LogInformation("Getting existing activities from SP");
 
-                var spList = web.Lists.TryGetList(Constants.Lists.Activities);
-                if (spList == null) throw new Exception("Getting SP list failed");
+                var spListActivities = web.Lists.TryGetList(Constants.Lists.Activities);
+                if (spListActivities == null) throw new Exception("Getting SP activity list failed");
+
+                var spListMentors = web.Lists.TryGetList(Constants.Lists.Mentors);
+                if (spListMentors == null) throw new Exception("Getting SP mentors list failed");
+
+                var spListRootMentors = web.Lists.TryGetList(Constants.Lists.RootMentors);
+                if (spListRootMentors == null) throw new Exception("Getting SP root mentor list failed");
 
                 var spActivities = new List<SpActivity>();
 
-                foreach (var item in spList.GetItems().Cast<SPListItem>())
+                foreach (var item in spListActivities.GetItems().Cast<SPListItem>())
                 {
-                    var mentor = SPHelper.GetUserValue(item, Constants.Activity.Mentor);
-                    var rootMentor = SPHelper.GetUserValue(item, Constants.Activity.RootMentor);
+                    var mentor = SPHelper.GetLookUpUserValue(spListMentors,item, Constants.Activity.Mentor, Constants.Activity.Employee);
+                    var rootMentor = SPHelper.GetLookUpUserValue(spListRootMentors, item, Constants.Activity.RootMentor, Constants.Activity.Employee);
 
                     var month = SPHelper.GetIntValue(item, Constants.Activity.Month);
                     var year = SPHelper.GetIntValue(item, Constants.Activity.Year);

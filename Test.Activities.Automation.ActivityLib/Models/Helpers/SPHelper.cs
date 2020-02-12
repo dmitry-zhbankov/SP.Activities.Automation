@@ -19,7 +19,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Helpers
             var rootMentorFieldValue =
                 rootMentorField.GetFieldValue(rootMentorItem[originField].ToString()) as SPFieldUserValue;
 
-            return rootMentorFieldValue.User;
+            return rootMentorFieldValue?.User;
         }
 
         public static SPUser GetUserValue(SPListItem item, string userField)

@@ -44,7 +44,5 @@ namespace Test.Activities.Automation.ActivityLib.Models.Helpers
             var res = serializer.ReadObject(stream) as T;
             return res;
         }
-
-
     }
 }
