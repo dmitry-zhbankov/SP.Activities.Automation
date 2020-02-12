@@ -7,7 +7,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
     [DataContract]
     public class ActivityInfo
     {
-        public int UserId { get; set; }
+        public int? UserId { get; set; }
 
         [DataMember]
         public string UserEmail { get; set; }

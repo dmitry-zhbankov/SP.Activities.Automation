@@ -70,7 +70,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
 
                     var member = members.FirstOrDefault(x => x.Mentor.ID == rootMentor.ID);
 
-                    if (member!=null)
+                    if (member != null)
                     {
                         member.RootMentor = rootMentor;
                     }
@@ -98,17 +98,52 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
 
             foreach (var activity in activities)
             {
-                UpdateDictionary(dict,activity, members);
+                UpdateDictionary(dict, activity, members);
             }
 
             return dict;
         }
 
-        private void UpdateDictionary(Dictionary<ActivityKey,ActivityValue> dict, ActivityInfo activity, IEnumerable<Member> members)
+        bool CheckActivityUser(ActivityInfo activity, IEnumerable<Member> members)
         {
+            if (activity.UserId != null)
+            {
+                return members.Any(x => x.Mentor.ID == activity.UserId || x.RootMentor.ID == activity.UserId);
+            }
+
+            if (activity.UserEmail == null) return false;
+
+            var id = GetUserIdByEmail(activity.UserEmail, members);
+            if (id == null)
+            {
+                return false;
+            }
+
+            activity.UserId = id;
+            return true;
+        }
+
+        private int? GetUserIdByEmail(string email, IEnumerable<Member> members)
+        {
+            var user = members.FirstOrDefault(x =>
+                x.Mentor.Email == email || x.RootMentor.Email == email);
+            
+            if (user == null) return null;
+
+            var id = user.Mentor?.ID ?? user.RootMentor.ID;
+            return id;
+        }
+
+        private void UpdateDictionary(Dictionary<ActivityKey, ActivityValue> dict, ActivityInfo activity, IEnumerable<Member> members)
+        {
+            if (!CheckActivityUser(activity, members))
+            {
+                return;
+            }
+
             var key = new ActivityKey()
             {
-                UserId = activity.UserId,
+                UserId = (int)activity.UserId,
                 Year = activity.Date.Year,
                 Month = activity.Date.Month
             };
@@ -143,7 +178,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
                 {
                     var newKey = new ActivityKey()
                     {
-                        UserId = activity.UserId,
+                        UserId = (int)activity.UserId,
                         Year = activity.Date.Year,
                         Month = activity.Date.Month
                     };
@@ -222,7 +257,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
 
                 foreach (var item in spListActivities.GetItems().Cast<SPListItem>())
                 {
-                    var mentor = SPHelper.GetLookUpUserValue(spListMentors,item, Constants.Activity.Mentor, Constants.Activity.Employee);
+                    var mentor = SPHelper.GetLookUpUserValue(spListMentors, item, Constants.Activity.Mentor, Constants.Activity.Employee);
                     var rootMentor = SPHelper.GetLookUpUserValue(spListRootMentors, item, Constants.Activity.RootMentor, Constants.Activity.Employee);
 
                     var month = SPHelper.GetIntValue(item, Constants.Activity.Month);
@@ -238,7 +273,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
                         Month = month,
                         Year = year,
                         Activities = new List<string>(activities),
-                        Paths=new List<string>(paths),
+                        Paths = new List<string>(paths),
                         Id = item.ID,
                     });
                 }

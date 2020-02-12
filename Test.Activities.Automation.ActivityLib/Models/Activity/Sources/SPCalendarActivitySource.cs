@@ -61,6 +61,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
                     activities.Add(new ActivityInfo
                     {
+                        UserId = rootMentor.ID,
                         UserEmail = rootMentor.Email,
                         Activity = Constants.Activity.ActivityType.RootMentoring,
                         Date = _yesterday,
@@ -72,6 +73,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
                     activities.Add(new ActivityInfo
                     {
+                        UserId = mentor.ID,
                         UserEmail = mentor.Email,
                         Activity = Constants.Activity.ActivityType.Mentoring,
                         Date = _yesterday,
