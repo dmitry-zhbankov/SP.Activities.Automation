@@ -7,9 +7,13 @@ namespace Test.Activities.Automation.ActivityLib.Models
     {
         public int Id { get; set; }
 
-        public SPUser Mentor { get; set; }
+        public int? MentorId { get; set; }
+
+        public int? MentorLookupId { get; set; }
         
-        public SPUser RootMentor { get; set; }
+        public int? RootMentorId { get; set; }
+
+        public int? RootMentorLookupId { get; set; }
 
         public int Year { get; set; }
 
@@ -19,6 +23,6 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
         public List<string> Paths { get; set; }
 
-        public bool IsNew => Id != 0;
+        public bool IsNew => Id == 0;
     }
 }

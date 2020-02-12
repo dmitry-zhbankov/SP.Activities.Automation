@@ -9,27 +9,58 @@ namespace Test.Activities.Automation.ActivityLib.Models.Helpers
 {
     public static class SPHelper
     {
-        public static SPUser GetLookUpUserValue(SPList originList, SPListItem item, string lookUpField, string originField)
+        public static SPFieldUserValue GetLookUpUserValue(SPList originList, SPListItem item, string lookUpField, string originField)
         {
             var userLookUpField = item.Fields.GetField(lookUpField);
-            var userFieldLookUpValue =
-                userLookUpField.GetFieldValue(item[lookUpField].ToString()) as SPFieldLookupValue;
+            SPFieldLookupValue userFieldLookUpValue;
+            
+            try
+            {
+                userFieldLookUpValue =
+                    userLookUpField.GetFieldValue(item[lookUpField].ToString()) as SPFieldLookupValue;
+            }
+            catch (NullReferenceException e)
+            {
+                return null;
+            }
+            
             var rootMentorField = originList.Fields.GetField(originField);
             var rootMentorItem = originList.GetItemById(userFieldLookUpValue.LookupId);
+            
             var rootMentorFieldValue =
                 rootMentorField.GetFieldValue(rootMentorItem[originField].ToString()) as SPFieldUserValue;
 
-            return rootMentorFieldValue?.User;
+            return rootMentorFieldValue;
         }
 
-        public static SPUser GetUserValue(SPListItem item, string userField)
+        public static int? GetLookUpItemId(SPList originList, SPListItem item, string lookUpField, string originField)
+        {
+            var userLookUpField = item.Fields.GetField(lookUpField);
+            SPFieldLookupValue userFieldLookUpValue;
+
+            try
+            {
+                userFieldLookUpValue =
+                    userLookUpField.GetFieldValue(item[lookUpField].ToString()) as SPFieldLookupValue;
+            }
+            catch (NullReferenceException e)
+            {
+                return null;
+            }
+
+            var rootMentorField = originList.Fields.GetField(originField);
+            var rootMentorItem = originList.GetItemById(userFieldLookUpValue.LookupId);
+
+            return rootMentorItem.ID;
+        }
+
+        public static SPFieldUserValue GetUserValue(SPListItem item, string userField)
         {
             var field = item.Fields.GetField(userField);
             var fieldValue =
                 field.GetFieldValue(item[userField].ToString()) as SPFieldUserValue;
-            var user = fieldValue?.User;
 
-            return user;
+            return fieldValue;
         }
 
         public static int GetIntValue(SPListItem item, string field)

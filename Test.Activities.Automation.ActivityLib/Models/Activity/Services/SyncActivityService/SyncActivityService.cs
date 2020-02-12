@@ -57,7 +57,9 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
 
                     members.Add(new Member
                     {
-                        Mentor = mentor,
+                        MentorId = mentor.User.ID,
+                        MentorLookupId = item.ID,
+                        MentorEmail = mentor.User.Email,
                         Paths = new List<string>(paths)
                     });
                 }
@@ -68,17 +70,21 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
 
                     var paths = SPHelper.GetMultiChoiceValue(item, Constants.Activity.Paths);
 
-                    var member = members.FirstOrDefault(x => x.Mentor.ID == rootMentor.ID);
+                    var member = members.FirstOrDefault(x => x.MentorId == rootMentor.User.ID);
 
                     if (member != null)
                     {
-                        member.RootMentor = rootMentor;
+                        member.RootMentorId = rootMentor.User.ID;
+                        member.RootMentorEmail = rootMentor.User.Email;
+                        member.RootMentorLookupId = item.ID;
                     }
                     else
                     {
                         members.Add(new Member
                         {
-                            RootMentor = rootMentor,
+                            RootMentorId = rootMentor.User.ID,
+                            RootMentorLookupId = item.ID,
+                            RootMentorEmail = rootMentor.User.Email,
                             Paths = new List<string>(paths)
                         });
                     }
@@ -108,7 +114,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
         {
             if (activity.UserId != null)
             {
-                return members.Any(x => x.Mentor.ID == activity.UserId || x.RootMentor.ID == activity.UserId);
+                return members.Any(x => x.MentorId == activity.UserId || x.RootMentorId == activity.UserId);
             }
 
             if (activity.UserEmail == null) return false;
@@ -126,11 +132,11 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
         private int? GetUserIdByEmail(string email, IEnumerable<Member> members)
         {
             var user = members.FirstOrDefault(x =>
-                x.Mentor.Email == email || x.RootMentor.Email == email);
-            
+                x.MentorEmail == email || x.RootMentorEmail == email);
+
             if (user == null) return null;
 
-            var id = user.Mentor?.ID ?? user.RootMentor.ID;
+            var id = user.MentorId ?? user.RootMentorId;
             return id;
         }
 
@@ -172,16 +178,12 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
             else
             {
                 var newMember = members.FirstOrDefault(x =>
-                    x.Mentor?.ID == activity.UserId || x.RootMentor?.ID == activity.UserId);
+                    x.MentorId == activity.UserId || x.RootMentorId == activity.UserId);
 
                 if (newMember != null)
                 {
-                    var newKey = new ActivityKey()
-                    {
-                        UserId = (int)activity.UserId,
-                        Year = activity.Date.Year,
-                        Month = activity.Date.Month
-                    };
+                    var newKey = key;
+
                     var newValue = new ActivityValue()
                     {
                         Activities = new HashSet<string>()
@@ -189,8 +191,10 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
                                 activity.Activity
                             },
                         Paths = new HashSet<string>(activity.Paths),
-                        Mentor = newMember.Mentor,
-                        RootMentor = newMember.RootMentor,
+                        MentorId = newMember.MentorId,
+                        MentorLookupId = newMember.MentorLookupId,
+                        RootMentorId = newMember.RootMentorId,
+                        RootMentorLookupId = newMember.RootMentorLookupId,
                         IsModified = true
                     };
 
@@ -207,13 +211,13 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
             {
                 int userId = 0;
 
-                if (spActivity.RootMentor != null)
+                if (spActivity.RootMentorId != null)
                 {
-                    userId = spActivity.RootMentor.ID;
+                    userId = (int)spActivity.RootMentorId;
                 }
-                else if (spActivity.Mentor != null)
+                else if (spActivity.MentorId != null)
                 {
-                    userId = spActivity.Mentor.ID;
+                    userId = (int)spActivity.MentorId;
                 }
 
                 var key = new ActivityKey()
@@ -228,8 +232,10 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
                     ActivityId = spActivity.Id,
                     Activities = new HashSet<string>(spActivity.Activities),
                     Paths = new HashSet<string>(spActivity.Paths),
-                    Mentor = spActivity.Mentor,
-                    RootMentor = spActivity.RootMentor
+                    MentorId = spActivity.MentorId,
+                    MentorLookupId = spActivity.MentorLookupId,
+                    RootMentorId = spActivity.RootMentorId,
+                    RootMentorLookupId = spActivity.RootMentorLookupId
                 };
 
                 dict.Add(key, value);
@@ -258,7 +264,11 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
                 foreach (var item in spListActivities.GetItems().Cast<SPListItem>())
                 {
                     var mentor = SPHelper.GetLookUpUserValue(spListMentors, item, Constants.Activity.Mentor, Constants.Activity.Employee);
+                    var mentorValue = SPHelper.GetLookUpItemId(spListMentors, item, Constants.Activity.Mentor,
+                        Constants.Activity.Employee);
+
                     var rootMentor = SPHelper.GetLookUpUserValue(spListRootMentors, item, Constants.Activity.RootMentor, Constants.Activity.Employee);
+                    var rootMentorValue = SPHelper.GetLookUpItemId(spListRootMentors, item, Constants.Activity.RootMentor, Constants.Activity.Employee);
 
                     var month = SPHelper.GetIntValue(item, Constants.Activity.Month);
                     var year = SPHelper.GetIntValue(item, Constants.Activity.Year);
@@ -268,8 +278,10 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
 
                     spActivities.Add(new SpActivity
                     {
-                        RootMentor = rootMentor,
-                        Mentor = mentor,
+                        RootMentorId = rootMentor?.User.ID,
+                        RootMentorLookupId = rootMentorValue,
+                        MentorId = mentor?.User.ID,
+                        MentorLookupId = mentorValue,
                         Month = month,
                         Year = year,
                         Activities = new List<string>(activities),
@@ -302,8 +314,10 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
                         Activities = new List<string>(x.Value.Activities),
                         Year = x.Key.Year,
                         Month = x.Key.Month,
-                        Mentor = x.Value.Mentor,
-                        RootMentor = x.Value.RootMentor,
+                        MentorId = x.Value.MentorId,
+                        MentorLookupId = x.Value.MentorLookupId,
+                        RootMentorId = x.Value.RootMentorId,
+                        RootMentorLookupId = x.Value.RootMentorLookupId,
                         Paths = new List<string>(x.Value.Paths)
                     });
 
@@ -329,8 +343,16 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
         {
             var newItem = spList.Items.Add();
 
-            newItem[Constants.Activity.Mentor] = item.Mentor;
-            newItem[Constants.Activity.RootMentor] = item.RootMentor;
+            if (item.MentorId != null)
+            {
+                newItem[Constants.Activity.Mentor] = item.MentorLookupId;
+            }
+
+            if (item.RootMentorId != null)
+            {
+                newItem[Constants.Activity.RootMentor] = item.RootMentorLookupId;
+            }
+
             newItem[Constants.Activity.Month] = item.Month;
             newItem[Constants.Activity.Year] = item.Year;
 

@@ -55,14 +55,14 @@ namespace Test.Activities.Automation.ActivityLib.Models
                 foreach (var item in _events)
                 {
                     var paths = SPHelper.GetMultiChoiceValue(item, Constants.Activity.Paths);
-
+                    
                     var rootMentor = SPHelper.GetLookUpUserValue(_rootMentorList, item, Constants.Calendar.RootMentor,
                         Constants.Activity.Employee);
 
                     activities.Add(new ActivityInfo
                     {
-                        UserId = rootMentor.ID,
-                        UserEmail = rootMentor.Email,
+                        UserId = rootMentor.User.ID,
+                        UserEmail = rootMentor.User.Email,
                         Activity = Constants.Activity.ActivityType.RootMentoring,
                         Date = _yesterday,
                         Paths = paths
@@ -73,8 +73,8 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
                     activities.Add(new ActivityInfo
                     {
-                        UserId = mentor.ID,
-                        UserEmail = mentor.Email,
+                        UserId = mentor.User.ID,
+                        UserEmail = mentor.User.Email,
                         Activity = Constants.Activity.ActivityType.Mentoring,
                         Date = _yesterday,
                         Paths = paths
