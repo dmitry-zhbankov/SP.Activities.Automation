@@ -22,12 +22,22 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
             {
                 _logger?.LogInformation("Synchronizing activities");
 
+                var now = DateTime.Now;
+                var minDate = new DateTime(now.Year, now.AddMonths(-1).Month, 1);
+                var maxDate = now.Date;
+
+                CheckActivityDate(ref activities, minDate, maxDate);
+
                 using (var site = new SPSite(Constants.Host))
                 using (var web = site.OpenWeb(Constants.Web))
                 {
-                    var spActivities = GetSpActivities(web);
+                    var spActivities = GetSpActivities(web, minDate, maxDate);
 
                     var members = GetSpMembers(web);
+
+                    CheckActivityUser(ref activities, members);
+
+                    CheckActivityPaths(ref activities, members);
 
                     var compareDict = Ensure(spActivities, activities, members);
 
@@ -40,6 +50,42 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
             {
                 throw new Exception($"Synchronizing activities failed. {e.Message}");
             }
+        }
+
+        private void CheckActivityPaths(ref IEnumerable<ActivityInfo> activities, IEnumerable<Member> members)
+        {
+            foreach (var activity in activities)
+            {
+                if (activity.Paths == null || !activity.Paths.Any())
+                {
+                    var member = members.FirstOrDefault(x =>
+                        x.MentorId == activity.UserId || x.RootMentorId == activity.UserId);
+
+                    if (member != null)
+                    {
+                        activity.Paths = new List<string>(member.Paths);
+                    }
+                }
+            }
+        }
+
+        private void CheckActivityDate(ref IEnumerable<ActivityInfo> activities, DateTime minDate, DateTime maxDate)
+        {
+            var checkedActivities = new List<ActivityInfo>();
+
+            foreach (var activity in activities)
+            {
+                if (activity.Date >= minDate && activity.Date <= maxDate)
+                {
+                    checkedActivities.Add(activity);
+                }
+                else
+                {
+                    _logger.LogWarning($"Inconsistent activity date. Activity={APIHelper.JsonSerialize(activity)}");
+                }
+            }
+
+            activities = checkedActivities;
         }
 
         private IEnumerable<Member> GetSpMembers(SPWeb web)
@@ -126,23 +172,34 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
             }
         }
 
-        bool CheckActivityUser(ActivityInfo activity, IEnumerable<Member> members)
+        void CheckActivityUser(ref IEnumerable<ActivityInfo> activities, IEnumerable<Member> members)
         {
-            if (activity.UserId != null)
+            var checkedActivities = new List<ActivityInfo>();
+
+            foreach (var activity in activities)
             {
-                return members.Any(x => x.MentorId == activity.UserId || x.RootMentorId == activity.UserId);
+                if (activity.UserId != null)
+                {
+                    if (members.Any(x => x.MentorId == activity.UserId || x.RootMentorId == activity.UserId))
+                    {
+                        checkedActivities.Add(activity);
+                        continue;
+                    }
+                }
+
+                if (activity.UserEmail == null) continue;
+
+                var id = GetUserIdByEmail(activity.UserEmail, members);
+                if (id == null)
+                {
+                    continue;
+                }
+
+                activity.UserId = id;
+                checkedActivities.Add(activity);
             }
 
-            if (activity.UserEmail == null) return false;
-
-            var id = GetUserIdByEmail(activity.UserEmail, members);
-            if (id == null)
-            {
-                return false;
-            }
-
-            activity.UserId = id;
-            return true;
+            activities = checkedActivities;
         }
 
         private int? GetUserIdByEmail(string email, IEnumerable<Member> members)
@@ -158,11 +215,6 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
 
         private void UpdateDictionary(Dictionary<ActivityKey, ActivityValue> dict, ActivityInfo activity, IEnumerable<Member> members)
         {
-            if (!CheckActivityUser(activity, members))
-            {
-                return;
-            }
-
             var key = new ActivityKey()
             {
                 UserId = (int)activity.UserId,
@@ -260,7 +312,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
             return dict;
         }
 
-        public IEnumerable<SpActivity> GetSpActivities(SPWeb web)
+        public IEnumerable<SpActivity> GetSpActivities(SPWeb web, DateTime minDate, DateTime maxDate)
         {
             try
             {
@@ -277,7 +329,13 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
 
                 var spActivities = new List<SpActivity>();
 
-                foreach (var item in spListActivities.GetItems().Cast<SPListItem>())
+                var dateRangeQuery = new SPQuery
+                {
+                    Query =
+                        $"<Where><And><Geq><FieldRef Name=\"Date\"/><Value Type=\"DateTime\">{minDate:yyyy-MM-dd}</Value></Geq><Leq><FieldRef Name=\"Date\"/><Value Type=\"DateTime\">{maxDate:yyyy-MM-dd}</Value></Leq></And></Where>"
+                };
+
+                foreach (var item in spListActivities.GetItems(dateRangeQuery).Cast<SPListItem>())
                 {
                     var mentor = SPHelper.GetLookUpUserValue(spListMentors, item, Constants.Activity.Mentor, Constants.Activity.Employee);
                     var mentorValue = SPHelper.GetLookUpItemId(spListMentors, item, Constants.Activity.Mentor,

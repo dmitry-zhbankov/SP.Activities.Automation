@@ -23,14 +23,14 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
             return devActivities.Concat(mentoringActivities).ToList();
         }
-        
+
         public IEnumerable<ActivityInfo> GetDevActivities()
         {
             try
             {
                 _logger?.LogInformation("Getting dev activities");
 
-                var devActivitySource=new GitLabActivitySource(_logger);
+                var devActivitySource = new GitLabActivitySource(_logger);
 
                 return devActivitySource.FetchActivity();
             }
@@ -40,14 +40,14 @@ namespace Test.Activities.Automation.ActivityLib.Models
                 return new List<ActivityInfo>();
             }
         }
-        
-        public  IEnumerable<ActivityInfo> GetMentoringActivities()
+
+        public IEnumerable<ActivityInfo> GetMentoringActivities()
         {
             try
             {
                 _logger?.LogInformation("Getting mentoring activities");
 
-                var mentoringActivitySource=new SPCalendarActivitySource(_logger);
+                var mentoringActivitySource = new SPCalendarActivitySource(_logger);
 
                 return mentoringActivitySource.FetchActivity();
             }

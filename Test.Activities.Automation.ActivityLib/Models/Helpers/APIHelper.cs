@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading.Tasks;
+using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
 namespace Test.Activities.Automation.ActivityLib.Models.Helpers
 {
@@ -43,6 +45,33 @@ namespace Test.Activities.Automation.ActivityLib.Models.Helpers
             stream.Position = 0;
             var res = serializer.ReadObject(stream) as T;
             return res;
+        }
+
+        public static string JsonSerialize<T>(T obj)
+        {
+            var serializer = new DataContractJsonSerializer(typeof(T));
+
+            var ms = new MemoryStream();
+            serializer.WriteObject(ms, obj);
+
+            ms.Position = 0;
+            var reader = new StreamReader(ms);
+            var str = reader.ReadToEnd();
+
+            return str;
+        }
+
+        public static async Task<HttpStatusCode> PostJsonAsync(Uri uri, string strContent)
+        {
+            using (var svcHandler = new HttpClientHandler { UseDefaultCredentials = true })
+            using (var svcClient = new HttpClient(svcHandler))
+            {
+                var content = new StringContent(strContent, Encoding.UTF8, Constants.HttpHeader.MediaType.ApplicationJson);
+
+                var res = await svcClient.PostAsync(uri, content);
+
+                return res.StatusCode;
+            }
         }
     }
 }

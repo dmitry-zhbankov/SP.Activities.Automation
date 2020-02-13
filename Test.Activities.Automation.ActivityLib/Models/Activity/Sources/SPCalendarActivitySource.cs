@@ -47,7 +47,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
         public override IEnumerable<ActivityInfo> FetchActivity()
         {
             _logger?.LogInformation("Fetching mentoring activities");
-            
+
             try
             {
                 var activities = new List<ActivityInfo>();
@@ -55,7 +55,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
                 foreach (var item in _events)
                 {
                     var paths = SPHelper.GetMultiChoiceValue(item, Constants.Activity.Paths);
-                    
+
                     var rootMentor = SPHelper.GetLookUpUserValue(_rootMentorList, item, Constants.Calendar.RootMentor,
                         Constants.Activity.Employee);
 
@@ -81,7 +81,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
                     });
                 }
 
-                return activities.GroupBy(x => x.UserEmail).Select(x => x.First());
+                return activities;
             }
             catch (Exception e)
             {

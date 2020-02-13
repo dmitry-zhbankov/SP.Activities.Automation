@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,9 +15,9 @@ namespace Test.Activities.Automation.Test
         {
             try
             {
-                ILogger logger = new ULSLogger("Test.Activities.Automation.Test");
+                ILogger logger = new DebugLogger();
 
-                logger?.LogInformation("Timer executing");
+                logger?.LogInformation("Executing main");
 
                 try
                 {
@@ -24,7 +25,7 @@ namespace Test.Activities.Automation.Test
 
                     var activities = activityService.FetchActivities();
 
-                    var spActivityService=new SyncActivityService(logger);
+                    var spActivityService = new SyncActivityService(logger);
 
                     spActivityService.SyncActivities(activities);
                 }
@@ -33,9 +34,9 @@ namespace Test.Activities.Automation.Test
                     logger?.LogError(e.Message);
                 }
 
-                logger?.LogInformation("Timer has executed");
+                logger?.LogInformation("Main has executed");
             }
-            catch
+            catch (Exception e)
             {
             }
         }

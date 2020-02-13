@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
-using System.Net.Http;
-using System.Runtime.Serialization.Json;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.SharePoint.Administration;
 using Test.Activities.Automation.ActivityLib.Models;
+using Test.Activities.Automation.ActivityLib.Models.Helpers;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
 namespace Test.Activities.Automation.TimerJob
@@ -42,7 +39,7 @@ namespace Test.Activities.Automation.TimerJob
 
                 try
                 {
-                    var activityService=new FetchActivityService(_logger);
+                    var activityService = new FetchActivityService(_logger);
 
                     var activities = activityService.FetchActivities();
 
@@ -66,36 +63,24 @@ namespace Test.Activities.Automation.TimerJob
             {
                 _logger?.LogInformation("Sending activities to service");
 
-                var serializer = new DataContractJsonSerializer(typeof(List<ActivityInfo>));
+                var str = APIHelper.JsonSerialize(activities);
+                var uri = new Uri(Constants.ServiceUrl);
 
-                var ms = new MemoryStream();
-                serializer.WriteObject(ms, activities);
-
-                ms.Position = 0;
-                var reader = new StreamReader(ms);
-                var str = reader.ReadToEnd();
-
-                using (var svcHandler = new HttpClientHandler { UseDefaultCredentials = true })
-                using (var svcClient = new HttpClient(svcHandler))
+                for (var i = 0; i < RequestAttempts; i++)
                 {
-                    var content = new StringContent(str, Encoding.UTF8, Constants.HttpHeader.MediaType.ApplicationJson);
-                    var uri = new Uri(Constants.ServiceUrl);
+                    var res = await APIHelper.PostJsonAsync(uri, str);
 
-                    for (var i = 0; i < RequestAttempts; i++)
+                    if (res == HttpStatusCode.OK) return;
+
+                    _logger?.LogWarning($"Request {i} failed");
+
+                    if (i != RequestAttempts)
                     {
-                        var res = await svcClient.PostAsync(uri, content);
-                        if (res.StatusCode == HttpStatusCode.OK) return;
-
-                        _logger?.LogWarning($"Request {i} failed");
-                        
-                        if (i!=RequestAttempts)
-                        {
-                            await Task.Delay(new TimeSpan(0, 5, 0));
-                        }
+                        await Task.Delay(new TimeSpan(0, 5, 0));
                     }
-
-                    throw new Exception("All requests to service failed");
                 }
+
+                throw new Exception("All requests to service failed");
             }
             catch (Exception e)
             {

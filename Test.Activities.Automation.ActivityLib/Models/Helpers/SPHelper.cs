@@ -13,7 +13,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Helpers
         {
             var userLookUpField = item.Fields.GetField(lookUpField);
             SPFieldLookupValue userFieldLookUpValue;
-            
+
             try
             {
                 userFieldLookUpValue =
@@ -23,10 +23,10 @@ namespace Test.Activities.Automation.ActivityLib.Models.Helpers
             {
                 return null;
             }
-            
+
             var rootMentorField = originList.Fields.GetField(originField);
             var rootMentorItem = originList.GetItemById(userFieldLookUpValue.LookupId);
-            
+
             var rootMentorFieldValue =
                 rootMentorField.GetFieldValue(rootMentorItem[originField].ToString()) as SPFieldUserValue;
 
@@ -48,7 +48,6 @@ namespace Test.Activities.Automation.ActivityLib.Models.Helpers
                 return null;
             }
 
-            var rootMentorField = originList.Fields.GetField(originField);
             var rootMentorItem = originList.GetItemById(userFieldLookUpValue.LookupId);
 
             return rootMentorItem.ID;
