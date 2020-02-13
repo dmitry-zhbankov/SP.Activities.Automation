@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
-using Microsoft.SharePoint;
 
-namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncActivityService
+namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services
 {
-    public partial class SyncActivityService
+    public partial class EnsureService
     {
         private protected class ActivityValue
         {

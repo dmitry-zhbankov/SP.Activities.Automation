@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.SharePoint;
+using Test.Activities.Automation.ActivityLib.Models.Activity.Classes;
 using Test.Activities.Automation.ActivityLib.Models.Helpers;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
 namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncActivityService
 {
-    public partial class SyncActivityService
+    public class SyncActivityService
     {
         private ILogger _logger;
 
@@ -22,11 +23,18 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
             {
                 _logger?.LogInformation("Synchronizing activities");
 
+                if (activities == null)
+                {
+                    throw new Exception("Activities are null");
+                }
+
                 var now = DateTime.Now;
                 var minDate = new DateTime(now.Year, now.AddMonths(-1).Month, 1);
                 var maxDate = now.Date;
 
-                CheckActivityDate(ref activities, minDate, maxDate);
+                var ensureService = new EnsureService(_logger);
+
+                ensureService.CheckActivityDate(ref activities, minDate, maxDate);
 
                 using (var site = new SPSite(Constants.Host))
                 using (var web = site.OpenWeb(Constants.Web))
@@ -35,57 +43,21 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
 
                     var members = GetSpMembers(web);
 
-                    CheckActivityUser(ref activities, members);
+                    ensureService.CheckActivityUser(ref activities, members);
 
-                    CheckActivityPaths(ref activities, members);
+                    ensureService.CheckActivityPaths(ref activities, members);
 
-                    var compareDict = Ensure(spActivities, activities, members);
+                    var itemsToUpdate = ensureService.Ensure(spActivities, activities, members);
 
                     web.AllowUnsafeUpdates = true;
 
-                    UpdateSpActivities(compareDict, web);
+                    UpdateSpActivities(itemsToUpdate, web);
                 }
             }
             catch (Exception e)
             {
                 throw new Exception($"Synchronizing activities failed. {e.Message}");
             }
-        }
-
-        private void CheckActivityPaths(ref IEnumerable<ActivityInfo> activities, IEnumerable<Member> members)
-        {
-            foreach (var activity in activities)
-            {
-                if (activity.Paths == null || !activity.Paths.Any())
-                {
-                    var member = members.FirstOrDefault(x =>
-                        x.MentorId == activity.UserId || x.RootMentorId == activity.UserId);
-
-                    if (member != null)
-                    {
-                        activity.Paths = new List<string>(member.Paths);
-                    }
-                }
-            }
-        }
-
-        private void CheckActivityDate(ref IEnumerable<ActivityInfo> activities, DateTime minDate, DateTime maxDate)
-        {
-            var checkedActivities = new List<ActivityInfo>();
-
-            foreach (var activity in activities)
-            {
-                if (activity.Date >= minDate && activity.Date <= maxDate)
-                {
-                    checkedActivities.Add(activity);
-                }
-                else
-                {
-                    _logger.LogWarning($"Inconsistent activity date. Activity={APIHelper.JsonSerialize(activity)}");
-                }
-            }
-
-            activities = checkedActivities;
         }
 
         private IEnumerable<Member> GetSpMembers(SPWeb web)
@@ -151,167 +123,6 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
             }
         }
 
-        private Dictionary<ActivityKey, ActivityValue> Ensure(IEnumerable<SpActivity> spActivities, IEnumerable<ActivityInfo> activities, IEnumerable<Member> members)
-        {
-            try
-            {
-                _logger?.LogInformation("Ensuring activities");
-
-                var dict = InitDictionary(spActivities);
-
-                foreach (var activity in activities)
-                {
-                    UpdateDictionary(dict, activity, members);
-                }
-
-                return dict;
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Ensuring activities failed. {e.Message}");
-            }
-        }
-
-        void CheckActivityUser(ref IEnumerable<ActivityInfo> activities, IEnumerable<Member> members)
-        {
-            var checkedActivities = new List<ActivityInfo>();
-
-            foreach (var activity in activities)
-            {
-                if (activity.UserId != null)
-                {
-                    if (members.Any(x => x.MentorId == activity.UserId || x.RootMentorId == activity.UserId))
-                    {
-                        checkedActivities.Add(activity);
-                        continue;
-                    }
-                }
-
-                if (activity.UserEmail == null) continue;
-
-                var id = GetUserIdByEmail(activity.UserEmail, members);
-                if (id == null)
-                {
-                    continue;
-                }
-
-                activity.UserId = id;
-                checkedActivities.Add(activity);
-            }
-
-            activities = checkedActivities;
-        }
-
-        private int? GetUserIdByEmail(string email, IEnumerable<Member> members)
-        {
-            var user = members.FirstOrDefault(x =>
-                x.MentorEmail == email || x.RootMentorEmail == email);
-
-            if (user == null) return null;
-
-            var id = user.MentorId ?? user.RootMentorId;
-            return id;
-        }
-
-        private void UpdateDictionary(Dictionary<ActivityKey, ActivityValue> dict, ActivityInfo activity, IEnumerable<Member> members)
-        {
-            var key = new ActivityKey()
-            {
-                UserId = (int)activity.UserId,
-                Year = activity.Date.Year,
-                Month = activity.Date.Month
-            };
-
-            if (dict.ContainsKey(key))
-            {
-                var value = dict[key];
-                if (!value.Activities.Contains(activity.Activity))
-                {
-                    value.Activities.Add(activity.Activity);
-                    dict[key].IsModified = true;
-                }
-
-                var set = new HashSet<string>(activity.Paths);
-                set.ExceptWith(value.Paths);
-
-                if (set.Count > 0)
-                {
-                    foreach (var item in set)
-                    {
-                        value.Paths.Add(item);
-                    }
-                    dict[key].IsModified = true;
-                }
-            }
-            else
-            {
-                var newMember = members.FirstOrDefault(x =>
-                    x.MentorId == activity.UserId || x.RootMentorId == activity.UserId);
-
-                if (newMember != null)
-                {
-                    var newKey = key;
-
-                    var newValue = new ActivityValue()
-                    {
-                        Activities = new HashSet<string>()
-                            {
-                                activity.Activity
-                            },
-                        Paths = new HashSet<string>(activity.Paths),
-                        MentorId = newMember.MentorId,
-                        MentorLookupId = newMember.MentorLookupId,
-                        RootMentorId = newMember.RootMentorId,
-                        RootMentorLookupId = newMember.RootMentorLookupId,
-                        IsModified = true
-                    };
-
-                    dict.Add(newKey, newValue);
-                }
-            }
-        }
-
-        Dictionary<ActivityKey, ActivityValue> InitDictionary(IEnumerable<SpActivity> spActivities)
-        {
-            var dict = new Dictionary<ActivityKey, ActivityValue>();
-
-            foreach (var spActivity in spActivities)
-            {
-                int userId = 0;
-
-                if (spActivity.RootMentorId != null)
-                {
-                    userId = (int)spActivity.RootMentorId;
-                }
-                else if (spActivity.MentorId != null)
-                {
-                    userId = (int)spActivity.MentorId;
-                }
-
-                var key = new ActivityKey()
-                {
-                    UserId = userId,
-                    Year = spActivity.Year,
-                    Month = spActivity.Month
-                };
-
-                var value = new ActivityValue()
-                {
-                    ActivityId = spActivity.Id,
-                    Activities = new HashSet<string>(spActivity.Activities),
-                    Paths = new HashSet<string>(spActivity.Paths),
-                    MentorId = spActivity.MentorId,
-                    MentorLookupId = spActivity.MentorLookupId,
-                    RootMentorId = spActivity.RootMentorId,
-                    RootMentorLookupId = spActivity.RootMentorLookupId
-                };
-
-                dict.Add(key, value);
-            }
-
-            return dict;
-        }
-
         public IEnumerable<SpActivity> GetSpActivities(SPWeb web, DateTime minDate, DateTime maxDate)
         {
             try
@@ -372,7 +183,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
             }
         }
 
-        void UpdateSpActivities(Dictionary<ActivityKey, ActivityValue> dict, SPWeb web)
+        void UpdateSpActivities(IEnumerable<SpActivity> itemsToUpdate, SPWeb web)
         {
             try
             {
@@ -380,20 +191,6 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncAc
 
                 var spList = web.Lists.TryGetList(Constants.Lists.Activities);
                 if (spList == null) throw new Exception("Getting SP list failed");
-
-                var itemsToUpdate = dict.Where(x => x.Value.IsModified)
-                    .Select(x => new SpActivity()
-                    {
-                        Id = x.Value.ActivityId,
-                        Activities = new List<string>(x.Value.Activities),
-                        Year = x.Key.Year,
-                        Month = x.Key.Month,
-                        MentorId = x.Value.MentorId,
-                        MentorLookupId = x.Value.MentorLookupId,
-                        RootMentorId = x.Value.RootMentorId,
-                        RootMentorLookupId = x.Value.RootMentorLookupId,
-                        Paths = new List<string>(x.Value.Paths)
-                    });
 
                 foreach (var item in itemsToUpdate)
                 {

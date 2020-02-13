@@ -68,9 +68,7 @@ namespace Test.Activities.Automation.TimerJob
 
                 for (var i = 0; i < RequestAttempts; i++)
                 {
-                    var res = await APIHelper.PostJsonAsync(uri, str);
-
-                    if (res == HttpStatusCode.OK) return;
+                    if (await APIHelper.PostJsonAsync(uri, str) == HttpStatusCode.OK) return;
 
                     _logger?.LogWarning($"Request {i} failed");
 

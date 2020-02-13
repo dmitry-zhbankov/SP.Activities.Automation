@@ -39,6 +39,8 @@ namespace Test.Activities.Automation.Test
             catch (Exception e)
             {
             }
+
+            Console.ReadKey();
         }
     }
 }
