@@ -27,7 +27,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services
                 }
                 else
                 {
-                    _logger.LogWarning($"Inconsistent activity date. Activity={APIHelper.JsonSerialize(activity)}");
+                    _logger?.LogWarning($"Inconsistent activity date. Activity={APIHelper.JsonSerialize(activity)}");
                 }
             }
 
@@ -46,7 +46,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services
                 if (member == null) continue;
 
                 activity.Paths = new List<string>(member.Paths);
-                _logger.LogWarning($"Activity paths are empty. Getting from member's paths. Activity={APIHelper.JsonSerialize(activity)}");
+                _logger?.LogWarning($"Activity paths are empty. Getting from member's paths. Activity={APIHelper.JsonSerialize(activity)}");
             }
         }
 
@@ -64,19 +64,19 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services
                         continue;
                     }
 
-                    _logger.LogWarning($"User with UserId={activity.UserId} is not found. Activity={APIHelper.JsonSerialize(activity)}");
+                    _logger?.LogWarning($"User with UserId={activity.UserId} is not found. Activity={APIHelper.JsonSerialize(activity)}");
                 }
 
                 if (activity.UserEmail == null)
                 {
-                    _logger.LogWarning($"UserId and email are empty. Activity={APIHelper.JsonSerialize(activity)}");
+                    _logger?.LogWarning($"UserId and email are empty. Activity={APIHelper.JsonSerialize(activity)}");
                     continue;
                 }
 
                 var id = GetUserIdByEmail(activity.UserEmail, members);
                 if (id == null)
                 {
-                    _logger.LogWarning($"User with email={activity.UserEmail} is not found. Activity={APIHelper.JsonSerialize(activity)}");
+                    _logger?.LogWarning($"User with email={activity.UserEmail} is not found. Activity={APIHelper.JsonSerialize(activity)}");
                     continue;
                 }
 

@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.Activities.Automation.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.Activities.Automation.Test", "Test.Activities.Automation.Test\Test.Activities.Automation.Test.csproj", "{94AC60B5-3508-4FEF-BAA8-A7EEE713DAE8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.Activities.Automation.ActivityLib.Tests", "Test.Activities.Automation.ActivityLib.Tests\Test.Activities.Automation.ActivityLib.Tests.csproj", "{651FE4BC-FF06-4ECF-BC91-17836857FEE9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,6 +42,10 @@ Global
 		{94AC60B5-3508-4FEF-BAA8-A7EEE713DAE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{94AC60B5-3508-4FEF-BAA8-A7EEE713DAE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{94AC60B5-3508-4FEF-BAA8-A7EEE713DAE8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{651FE4BC-FF06-4ECF-BC91-17836857FEE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{651FE4BC-FF06-4ECF-BC91-17836857FEE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{651FE4BC-FF06-4ECF-BC91-17836857FEE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{651FE4BC-FF06-4ECF-BC91-17836857FEE9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
