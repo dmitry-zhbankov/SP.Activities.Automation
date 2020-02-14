@@ -16,9 +16,9 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services
 
             public int? RootMentorLookupId { get; set; }
 
-            public HashSet<string> Paths { get; set; }
+            public SortedSet<string> Paths { get; set; }
 
-            public HashSet<string> Activities { get; set; }
+            public SortedSet<string> Activities { get; set; }
 
             public bool IsModified { get; set; }
         }

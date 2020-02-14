@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Test.Activities.Automation.ActivityLib.Models.Activity.Classes;
 using Test.Activities.Automation.ActivityLib.Models.Helpers;
+using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
 namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services
 {
@@ -168,16 +169,34 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services
                     x.MentorId == activity.UserId || x.RootMentorId == activity.UserId);
 
                 if (newMember == null) return;
-                
+
                 var newKey = key;
+
+                switch (activity.Activity)
+                {
+                    case Constants.Activity.ActivityType.Mentoring:
+                        if (newMember.MentorId == null)
+                        {
+                            _logger?.LogWarning($"User with UserId={newMember.RootMentorId} is not a mentor. Activity={APIHelper.JsonSerialize(activity)}");
+                            return;
+                        }
+                        break;
+                    case Constants.Activity.ActivityType.RootMentoring:
+                        if (newMember.RootMentorId == null)
+                        {
+                            _logger?.LogWarning($"User with UserId={newMember.MentorId} is not root mentor. Activity={APIHelper.JsonSerialize(activity)}");
+                            return;
+                        }
+                        break;
+                }
 
                 var newValue = new ActivityValue()
                 {
-                    Activities = new HashSet<string>()
+                    Activities = new SortedSet<string>()
                     {
                         activity.Activity
                     },
-                    Paths = new HashSet<string>(activity.Paths),
+                    Paths = new SortedSet<string>(activity.Paths),
                     MentorId = newMember.MentorId,
                     MentorLookupId = newMember.MentorLookupId,
                     RootMentorId = newMember.RootMentorId,
@@ -216,8 +235,8 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services
                 var value = new ActivityValue()
                 {
                     ActivityId = spActivity.Id,
-                    Activities = new HashSet<string>(spActivity.Activities),
-                    Paths = new HashSet<string>(spActivity.Paths),
+                    Activities = new SortedSet<string>(spActivity.Activities),
+                    Paths = new SortedSet<string>(spActivity.Paths),
                     MentorId = spActivity.MentorId,
                     MentorLookupId = spActivity.MentorLookupId,
                     RootMentorId = spActivity.RootMentorId,

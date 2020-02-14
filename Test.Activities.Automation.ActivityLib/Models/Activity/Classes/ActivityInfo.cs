@@ -33,8 +33,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
                 return UserEmail == otherObj.UserEmail &&
                        Date.Equals(otherObj.Date) &&
                        Activity == otherObj.Activity &&
-                       Paths==null && otherObj.Paths==null ||
-                       Paths.SequenceEqual(otherObj.Paths);
+                       (Paths == null && otherObj.Paths == null || Paths.SequenceEqual(otherObj.Paths));
             }
 
             return false;

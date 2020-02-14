@@ -20,33 +20,33 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.Tests
             {
                 new ActivityInfo()
                 {
-                    Activity="Activity 1",
-                    Date=minDate.AddDays(-1),
+                    Activity = "Activity 1",
+                    Date = minDate.AddDays(-1),
                 },
                 new ActivityInfo()
                 {
-                    Activity="Activity 2",
-                    Date=maxDate
+                    Activity = "Activity 2",
+                    Date = maxDate
                 },
                 new ActivityInfo()
                 {
-                    Activity="Activity 3",
-                    Date=maxDate.AddDays(1)
+                    Activity = "Activity 3",
+                    Date = maxDate.AddDays(1)
                 },
                 new ActivityInfo()
                 {
-                    Activity="Activity 4",
-                    Date=maxDate.AddDays(-1)
+                    Activity = "Activity 4",
+                    Date = maxDate.AddDays(-1)
                 },
                 new ActivityInfo()
                 {
-                    Activity="Activity 5",
-                    Date=minDate
+                    Activity = "Activity 5",
+                    Date = minDate
                 },
                 new ActivityInfo()
                 {
-                    Activity="Activity 6",
-                    Date=minDate.AddDays(1)
+                    Activity = "Activity 6",
+                    Date = minDate.AddDays(1)
                 }
             };
 
@@ -56,23 +56,23 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.Tests
             {
                 new ActivityInfo()
                 {
-                    Activity="Activity 2",
-                    Date=maxDate
+                    Activity = "Activity 2",
+                    Date = maxDate
                 },
                 new ActivityInfo()
                 {
-                    Activity="Activity 4",
-                    Date=maxDate.AddDays(-1)
+                    Activity = "Activity 4",
+                    Date = maxDate.AddDays(-1)
                 },
                 new ActivityInfo()
                 {
-                    Activity="Activity 5",
-                    Date=minDate
+                    Activity = "Activity 5",
+                    Date = minDate
                 },
                 new ActivityInfo()
                 {
-                    Activity="Activity 6",
-                    Date=minDate.AddDays(1)
+                    Activity = "Activity 6",
+                    Date = minDate.AddDays(1)
                 }
             };
 
@@ -89,7 +89,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.Tests
                 new ActivityInfo()
                 {
                     UserId = 1,
-                    Activity="Activity 1",
+                    Activity = "Activity 1",
                     Paths = new List<string>()
                     {
                         "Path 1",
@@ -98,7 +98,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.Tests
                 new ActivityInfo()
                 {
                     UserId = 2,
-                    Activity="Activity 2",
+                    Activity = "Activity 2",
                     Paths = new List<string>()
                     {
                         "Path 1",
@@ -108,7 +108,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.Tests
                 new ActivityInfo()
                 {
                     UserId = 3,
-                    Activity="Activity 1",
+                    Activity = "Activity 1",
                 },
             };
 
@@ -116,16 +116,16 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.Tests
             {
                 new Member()
                 {
-                    MentorId=1
+                    MentorId = 1
                 },
                 new Member()
                 {
-                    RootMentorId= 2
+                    RootMentorId = 2
                 },
                 new Member()
                 {
                     MentorId = 3,
-                    Paths=new List<string>()
+                    Paths = new List<string>()
                     {
                         "Path 1",
                         "Path 3"
@@ -138,7 +138,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.Tests
                 new ActivityInfo()
                 {
                     UserId = 1,
-                    Activity="Activity 1",
+                    Activity = "Activity 1",
                     Paths = new List<string>()
                     {
                         "Path 1",
@@ -147,7 +147,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.Tests
                 new ActivityInfo()
                 {
                     UserId = 2,
-                    Activity="Activity 2",
+                    Activity = "Activity 2",
                     Paths = new List<string>()
                     {
                         "Path 1",
@@ -157,8 +157,8 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.Tests
                 new ActivityInfo()
                 {
                     UserId = 3,
-                    Activity="Activity 1",
-                    Paths=new List<string>()
+                    Activity = "Activity 1",
+                    Paths = new List<string>()
                     {
                         "Path 1",
                         "Path 3"
@@ -181,27 +181,27 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.Tests
                 new ActivityInfo()
                 {
                     UserId = 1,
-                    Activity="Activity 1",
+                    Activity = "Activity 1",
                 },
                 new ActivityInfo()
                 {
                     UserId = 2,
-                    Activity="Activity 2",
+                    Activity = "Activity 2",
                 },
                 new ActivityInfo()
                 {
                     UserId = 3,
-                    Activity="Activity 3",
+                    Activity = "Activity 3",
                 },
                 new ActivityInfo()
                 {
                     UserId = 4,
-                    Activity="Activity 4",
+                    Activity = "Activity 4",
                 },
                 new ActivityInfo()
                 {
                     UserId = 5,
-                    Activity="Activity 5",
+                    Activity = "Activity 5",
                 },
             };
 
@@ -213,7 +213,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.Tests
                 },
                 new Member()
                 {
-                    RootMentorId= 2
+                    RootMentorId = 2
                 },
                 new Member()
                 {
@@ -227,17 +227,17 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.Tests
                 new ActivityInfo()
                 {
                     UserId = 1,
-                    Activity="Activity 1",
+                    Activity = "Activity 1",
                 },
                 new ActivityInfo()
                 {
                     UserId = 2,
-                    Activity="Activity 2",
+                    Activity = "Activity 2",
                 },
                 new ActivityInfo()
                 {
                     UserId = 3,
-                    Activity="Activity 3",
+                    Activity = "Activity 3",
                 },
             };
 
@@ -249,7 +249,163 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services.Tests
         [TestMethod()]
         public void EnsureTest()
         {
-            
-        } 
+            var ensureService = new EnsureService(null);
+
+            var spActivities = new List<SpActivity>()
+            {
+                new SpActivity()
+                {
+                    MentorId = 1,
+                    Activities = new List<string>()
+                    {
+                        "Mentoring"
+                    },
+                    Year = 2020,
+                    Month = 1,
+                    Paths = new List<string>()
+                    {
+                        "Path 1",
+                        "Path 2",
+                    }
+                },
+                new SpActivity()
+                {
+                    RootMentorId = 2,
+                    MentorId = 2,
+                    Activities = new List<string>()
+                    {
+                        "Mentoring",
+                        "Root Mentoring"
+                    },
+                    Year = 2020,
+                    Month = 1,
+                    Paths = new List<string>()
+                    {
+                        "Path 3",
+                    }
+                },
+                new SpActivity()
+                {
+                    RootMentorId = 2,
+                    MentorId = 2,
+                    Activities = new List<string>()
+                    {
+                        "Development"
+                    },
+                    Year = 2020,
+                    Month = 2,
+                    Paths = new List<string>()
+                    {
+                        "Path 4",
+                    }
+                },
+            };
+
+            var activities = new List<ActivityInfo>()
+            {
+                new ActivityInfo()
+                {
+                    UserId = 1,
+                    Activity = "Development",
+                    Paths = new List<string>()
+                    {
+                        "Path 3"
+                    },
+                    Date = new DateTime(2020, 1, 1)
+                },
+                new ActivityInfo()
+                {
+                    UserId = 2,
+                    Activity = "Development",
+                    Paths = new List<string>()
+                    {
+                        "Path 1"
+                    },
+                    Date = new DateTime(2020, 2, 1)
+                },
+                new ActivityInfo()
+                {
+                    UserId = 3,
+                    Activity = "Development",
+                    Paths = new List<string>()
+                    {
+                        "Path 3"
+                    },
+                    Date = new DateTime(2020, 2, 1)
+                },
+            };
+
+            var members = new List<Member>()
+            {
+                new Member()
+                {
+                    MentorId = 1,
+                },
+                new Member()
+                {
+                    RootMentorId = 2,
+                    MentorId = 2,
+                },
+                new Member()
+                {
+                    RootMentorId = 3,
+                },
+            };
+
+            var actualSpActivities = ensureService.Ensure(spActivities, activities, members);
+
+            var expectedSpActivite = new List<SpActivity>()
+            {
+                new SpActivity()
+                {
+                    MentorId = 1,
+                    Activities = new List<string>()
+                    {
+                        "Development",
+                        "Mentoring",
+                    },
+                    Year = 2020,
+                    Month = 1,
+                    Paths = new List<string>()
+                    {
+                        "Path 1",
+                        "Path 2",
+                        "Path 3",
+                    }
+                },
+                new SpActivity()
+                {
+                    RootMentorId = 2,
+                    MentorId = 2,
+                    Activities = new List<string>()
+                    {
+                        "Development"
+                    },
+                    Year = 2020,
+                    Month = 2,
+                    Paths = new List<string>()
+                    {
+                        "Path 1",
+                        "Path 4",
+                    }
+                },
+                new SpActivity()
+                {
+                    RootMentorId = 3,
+                    Activities = new List<string>()
+                    {
+                        "Development"
+                    },
+                    Year = 2020,
+                    Month = 2,
+                    Paths = new List<string>()
+                    {
+                        "Path 3",
+                    }
+                },
+            };
+
+            CollectionAssert.AreEqual(actualSpActivities.ToList(), expectedSpActivite);
+        }
     }
 }
