@@ -31,7 +31,7 @@ namespace Test.Activities.Automation.TimerJob
         {
         }
 
-        public override void Execute(Guid targetInstanceId)
+        public override async void Execute(Guid targetInstanceId)
         {
             try
             {
@@ -43,7 +43,7 @@ namespace Test.Activities.Automation.TimerJob
 
                     var activities = activityService.FetchActivities();
 
-                    SendActivities(activities);
+                    await SendActivities(activities);
                 }
                 catch (Exception e)
                 {
@@ -57,7 +57,7 @@ namespace Test.Activities.Automation.TimerJob
             }
         }
 
-        private async void SendActivities(IEnumerable<ActivityInfo> activities)
+        private async Task SendActivities(IEnumerable<ActivityInfo> activities)
         {
             try
             {

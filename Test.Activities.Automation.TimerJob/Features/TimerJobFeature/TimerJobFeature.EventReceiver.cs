@@ -33,7 +33,7 @@ namespace Test.Activities.Automation.TimerJob.Features.TimerJobFeature
             var docJob = new TimerJob(docJobName, webApp,
                 SPServer.Local, SPJobLockType.Job);
 
-            var schedule = new SPMinuteSchedule { BeginSecond = 0, EndSecond = 10, Interval = 1 };
+            var schedule = new SPDailySchedule();
             docJob.Schedule = schedule;
             docJob.Update();
         }
