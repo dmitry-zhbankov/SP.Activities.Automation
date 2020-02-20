@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Net;
 using System.ServiceModel.Activation;
+using System.ServiceModel.Web;
+using Microsoft.SharePoint;
 using Test.Activities.Automation.ActivityLib.Models;
-using Test.Activities.Automation.ActivityLib.Models.Activity.Services.SyncActivityService;
+using Test.Activities.Automation.ActivityLib.Utils.Constants;
+using EnsureService = Test.Activities.Automation.ActivityLib.Services.EnsureService;
 
 namespace Test.Activities.Automation.WCFService
 {
@@ -23,9 +26,11 @@ namespace Test.Activities.Automation.WCFService
             }
         }
 
-        public HttpStatusCode FillActivities(IEnumerable<ActivityInfo> activities)
+        public void FillActivities(IEnumerable<ActivityInfo> activities)
         {
             var statusCode = HttpStatusCode.Accepted;
+
+            var web = SPContext.Current.Web;
 
             try
             {
@@ -33,15 +38,44 @@ namespace Test.Activities.Automation.WCFService
 
                 try
                 {
-                    var spActivityService = new SyncActivityService(_logger);
+                    _logger?.LogInformation("Synchronizing activities");
 
-                    spActivityService.SyncActivities(activities);
+                    if (activities == null)
+                    {
+                        throw new Exception("Activities are null");
+                    }
+
+                    var now = DateTime.Now;
+                    var minDate = new DateTime(now.Year, now.AddMonths(-1).Month, 1);
+                    var maxDate = now.Date;
+
+                    var spListActivities = web.Lists.TryGetList(Constants.Lists.Activities);
+                    if (spListActivities == null) throw new Exception("Getting SP activity list failed");
+
+                    var spListMentors = web.Lists.TryGetList(Constants.Lists.Mentors);
+                    if (spListMentors == null) throw new Exception("Getting SP mentors list failed");
+
+                    var spListRootMentors = web.Lists.TryGetList(Constants.Lists.RootMentors);
+                    if (spListRootMentors == null) throw new Exception("Getting SP root mentor list failed");
+
+                    SpActivity.SetLogger(_logger);
+                    var spActivities = SpActivity.GetSpActivities(spListActivities, spListMentors, spListRootMentors, minDate, maxDate);
+
+                    SpMember.SetLogger(_logger);
+                    var spMembers = SpMember.GetSpMembers(spListMentors, spListRootMentors);
+
+                    var ensureService = new EnsureService(_logger);
+                    var itemsToUpdate = ensureService.Ensure(spActivities, activities, spMembers);
+                    
+                    web.AllowUnsafeUpdates = true;
+                    SpActivity.UpdateSpActivities(itemsToUpdate, spListActivities);
 
                     _logger.LogInformation("Request has been treated successfully");
                 }
                 catch (Exception e)
                 {
-                    _logger?.LogError(e.Message);
+                    _logger.LogError($"Synchronizing activities failed. {e.Message}");
+
                     statusCode = HttpStatusCode.InternalServerError;
                 }
 
@@ -52,7 +86,8 @@ namespace Test.Activities.Automation.WCFService
                 statusCode = HttpStatusCode.InternalServerError;
             }
 
-            return statusCode;
+            var ctx = WebOperationContext.Current;
+            ctx.OutgoingResponse.StatusCode = statusCode;
         }
     }
 }

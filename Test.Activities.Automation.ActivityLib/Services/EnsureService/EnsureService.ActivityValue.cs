@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using Test.Activities.Automation.ActivityLib.Models;
 
-namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services
+namespace Test.Activities.Automation.ActivityLib.Services
 {
     public partial class EnsureService
     {
@@ -8,13 +9,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services
         {
             public int ActivityId { get; set; }
 
-            public int? MentorId { get; set; }
-
-            public int? MentorLookupId { get; set; }
-
-            public int? RootMentorId { get; set; }
-
-            public int? RootMentorLookupId { get; set; }
+            public SpMember SpMember { get; set; }
 
             public SortedSet<string> Paths { get; set; }
 

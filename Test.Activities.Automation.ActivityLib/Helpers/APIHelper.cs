@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading.Tasks;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
-namespace Test.Activities.Automation.ActivityLib.Models.Helpers
+namespace Test.Activities.Automation.ActivityLib.Helpers
 {
     public static class APIHelper
     {
@@ -61,7 +59,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Helpers
             return str;
         }
 
-        public static async Task<HttpStatusCode> PostJsonAsync(Uri uri, string strContent)
+        public static async Task<HttpResponseMessage> PostJsonAsync(Uri uri, string strContent)
         {
             using (var svcHandler = new HttpClientHandler { UseDefaultCredentials = true })
             using (var svcClient = new HttpClient(svcHandler))
@@ -70,7 +68,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Helpers
 
                 var res = await svcClient.PostAsync(uri, content);
 
-                return res.StatusCode;
+                return res;
             }
         }
     }

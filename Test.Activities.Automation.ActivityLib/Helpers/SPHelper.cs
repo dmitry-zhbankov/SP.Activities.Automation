@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.SharePoint;
 
-namespace Test.Activities.Automation.ActivityLib.Models.Helpers
+namespace Test.Activities.Automation.ActivityLib.Helpers
 {
     public static class SPHelper
     {
@@ -75,7 +72,7 @@ namespace Test.Activities.Automation.ActivityLib.Models.Helpers
             var fieldValue =
                 field.GetFieldValue(item[fieldName].ToString()) as
                     SPFieldMultiChoiceValue;
-
+            
             var res = new List<string>();
             for (int i = 0; i < fieldValue.Count; i++)
             {

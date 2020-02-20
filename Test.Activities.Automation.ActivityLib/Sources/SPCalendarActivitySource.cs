@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.SharePoint;
-using Test.Activities.Automation.ActivityLib.Models.Helpers;
+using Test.Activities.Automation.ActivityLib.Helpers;
+using Test.Activities.Automation.ActivityLib.Models;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
-namespace Test.Activities.Automation.ActivityLib.Models
+namespace Test.Activities.Automation.ActivityLib.Sources
 {
     public class SPCalendarActivitySource : ActivitySource
     {
@@ -13,38 +14,37 @@ namespace Test.Activities.Automation.ActivityLib.Models
         private SPList _mentorList;
         private SPList _rootMentorList;
         private DateTime _yesterday;
+        private SPWeb _web;
 
-        public SPCalendarActivitySource(ILogger logger) : base(logger)
+        public SPCalendarActivitySource(ILogger logger, SPWeb web) : base(logger)
         {
+            _web = web;
         }
 
         public override void Configure()
         {
             try
             {
-                SPList mentoringCalendarList;
+                var mentoringCalendarList = _web.Lists[Constants.Lists.MentoringCalendar];
+                _rootMentorList = _web.Lists[Constants.Lists.RootMentors];
+                _mentorList = _web.Lists[Constants.Lists.Mentors];
 
-                using (var site = new SPSite(Constants.Host))
-                using (var web = site.OpenWeb(Constants.Web))
-                {
-                    mentoringCalendarList = web.Lists[Constants.Lists.MentoringCalendar];
-                    _rootMentorList = web.Lists[Constants.Lists.RootMentors];
-                    _mentorList = web.Lists[Constants.Lists.Mentors];
-                }
-
-                var eventsCollection = mentoringCalendarList.GetItems();
                 _yesterday = DateTime.Now.AddDays(-1).Date;
-                _events = eventsCollection.Cast<SPListItem>()
-                    .Where(x => x[Constants.Calendar.StartTime] as DateTime? <= _yesterday)
-                    .Where(x => x[Constants.Calendar.EndTime] as DateTime? >= _yesterday);
+                var dateRangeQuery = new SPQuery
+                {
+                    Query =
+                        $"<Where><And><Geq><FieldRef Name=\"{Constants.Calendar.EndTime}\"/><Value Type=\"DateTime\">{_yesterday:yyyy-MM-dd}</Value></Geq><Leq><FieldRef Name=\"{Constants.Calendar.StartTime}\"/><Value Type=\"DateTime\">{_yesterday:yyyy-MM-dd}</Value></Leq></And></Where>"
+                };
+
+                _events = mentoringCalendarList.GetItems(dateRangeQuery).Cast<SPListItem>();
             }
             catch (Exception e)
             {
-                throw new Exception($"Getting mentoring calendar configuration failed. {e.Message}");
+                throw new Exception($"Getting mentoring calendar configuration failed. {e}");
             }
         }
 
-        public override IEnumerable<ActivityInfo> FetchActivity()
+        public override IEnumerable<ActivityInfo> FetchActivities()
         {
             _logger?.LogInformation("Fetching mentoring activities");
 
@@ -62,7 +62,6 @@ namespace Test.Activities.Automation.ActivityLib.Models
                     activities.Add(new ActivityInfo
                     {
                         UserId = rootMentor.User.ID,
-                        UserEmail = rootMentor.User.Email,
                         Activity = Constants.Activity.ActivityType.RootMentoring,
                         Date = _yesterday,
                         Paths = paths
@@ -74,7 +73,6 @@ namespace Test.Activities.Automation.ActivityLib.Models
                     activities.Add(new ActivityInfo
                     {
                         UserId = mentor.User.ID,
-                        UserEmail = mentor.User.Email,
                         Activity = Constants.Activity.ActivityType.Mentoring,
                         Date = _yesterday,
                         Paths = paths
@@ -85,7 +83,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
             catch (Exception e)
             {
-                _logger?.LogError($"Fetching mentoring activities failed. {e.Message}");
+                _logger?.LogError($"Fetching mentoring activities failed. {e}");
                 return null;
             }
         }

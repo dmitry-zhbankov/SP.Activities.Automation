@@ -1,36 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Runtime.Serialization.Json;
 using Microsoft.SharePoint;
-using Test.Activities.Automation.ActivityLib.Models.Helpers;
+using Test.Activities.Automation.ActivityLib.Helpers;
+using Test.Activities.Automation.ActivityLib.Models;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
-namespace Test.Activities.Automation.ActivityLib.Models
+namespace Test.Activities.Automation.ActivityLib.Sources
 {
     public partial class GitLabActivitySource : ActivitySource
     {
         private IEnumerable<Repository> _repositories;
+        private IEnumerable<SpMember> _members;
 
-        public GitLabActivitySource(ILogger logger) : base(logger)
+        public GitLabActivitySource(ILogger logger, IEnumerable<SpMember> members, SPList configList) : base(logger)
+        {
+            _members = members;
+            Configure(configList);
+        }
+        
+        private new void Configure()
         {
         }
 
-        public override void Configure()
+        public void Configure(SPList configList)
         {
             try
             {
-                IEnumerable<SPListItem> configItems;
+                //using (var site = new SPSite(Constants.Host))
+                //using (var web = site.OpenWeb(Constants.Web))
+                //{
+                //    var configList = web.Lists[Constants.Lists.Configurations];
+                //}
 
-                using (var site = new SPSite(Constants.Host))
-                using (var web = site.OpenWeb(Constants.Web))
-                {
-                    var configList = web.Lists[Constants.Lists.Configurations];
-                    configItems = configList.GetItems().Cast<SPListItem>();
-                }
+                var configItems = configList.GetItems().Cast<SPListItem>();
 
                 _repositories = configItems.Where(item =>
                          item[Constants.Configuration.Key] as string ==
@@ -50,11 +55,11 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
             catch (Exception e)
             {
-                throw new Exception($"Getting repositories configuration failed. {e.Message}");
+                throw new Exception($"Getting repositories configuration failed. {e}");
             }
         }
 
-        public override IEnumerable<ActivityInfo> FetchActivity()
+        public override IEnumerable<ActivityInfo> FetchActivities()
         {
             _logger.LogInformation("Fetching GitLab activity");
 
@@ -62,24 +67,26 @@ namespace Test.Activities.Automation.ActivityLib.Models
             {
                 GetRepoCommits();
 
-                var activities = CreateRepoActivities();
+                var emailActivities = CreateRepoActivities();
+                var activities = emailActivities.Select(x => new ActivityInfo(x, _members));
+
 
                 return activities;
             }
             catch (Exception e)
             {
-                _logger.LogError($"Fetching GitLab activity failed. {e.Message}");
+                _logger.LogError($"Fetching GitLab activity failed. {e}");
                 return null;
             }
         }
 
-        private IEnumerable<ActivityInfo> CreateRepoActivities()
+        private IEnumerable<ActivityInfoEmail> CreateRepoActivities()
         {
-            var activities = new List<ActivityInfo>();
+            var activities = new List<ActivityInfoEmail>();
             foreach (var repo in _repositories)
                 foreach (var branch in repo.Branches)
                     activities.AddRange(branch.Commits.Select(commit =>
-                        new ActivityInfo
+                        new ActivityInfoEmail
                         {
                             Activity = repo.Activity,
                             Date = DateTime.Parse(commit.Date),
@@ -111,21 +118,21 @@ namespace Test.Activities.Automation.ActivityLib.Models
                             {
                                 var commits = GetBranchCommits(client, branch, repo);
 
-                                branch.Commits = new List<Commit>(commits);
+                                branch.Commits = commits.ToList();
                             }
 
                             repo.Branches = new List<Branch>(branches);
                         }
                         catch (Exception e)
                         {
-                            _logger.LogError($"Getting '{repo.Host}' repository commits failed. {e.Message}");
+                            _logger.LogError($"Getting '{repo.Host}' repository commits failed. {e}");
                         }
                     }
                 }
             }
             catch (Exception e)
             {
-                throw new Exception($"Getting repository commits failed. {e.Message}");
+                throw new Exception($"Getting repository commits failed. {e}");
             }
         }
 
@@ -147,7 +154,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
             catch (Exception e)
             {
-                throw new Exception($"Getting branch commits failed. {e.Message}");
+                throw new Exception($"Getting branch commits failed. {e}");
             }
         }
 
@@ -162,7 +169,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
             catch (Exception e)
             {
-                throw new Exception($"Getting branches failed. {e.Message}");
+                throw new Exception($"Getting branches failed. {e}");
             }
         }
     }

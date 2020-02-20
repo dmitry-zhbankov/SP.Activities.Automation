@@ -6,10 +6,8 @@ using System.Runtime.Serialization;
 namespace Test.Activities.Automation.ActivityLib.Models
 {
     [DataContract]
-    public class ActivityInfo
+    public class ActivityInfoEmail
     {
-        public int? UserId { get; set; }
-
         [DataMember]
         public string UserEmail { get; set; }
 
@@ -23,12 +21,12 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
         public override int GetHashCode()
         {
-            return Convert.ToInt32(UserId);
+            return UserEmail.Length;
         }
 
         public override bool Equals(object obj)
         {
-            if (obj is ActivityInfo otherObj)
+            if (obj is ActivityInfoEmail otherObj)
             {
                 return UserEmail == otherObj.UserEmail &&
                        Date.Equals(otherObj.Date) &&

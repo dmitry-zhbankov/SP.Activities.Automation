@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using Test.Activities.Automation.ActivityLib.Models;
 
-namespace Test.Activities.Automation.ActivityLib.Models
+namespace Test.Activities.Automation.ActivityLib.Sources
 {
     public abstract class ActivitySource
     {
@@ -17,6 +18,6 @@ namespace Test.Activities.Automation.ActivityLib.Models
         {
         }
 
-        public abstract IEnumerable<ActivityInfo> FetchActivity();
+        public abstract IEnumerable<ActivityInfo> FetchActivities();
     }
 }

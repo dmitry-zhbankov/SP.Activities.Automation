@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.SharePoint;
 using Microsoft.SharePoint.Administration;
+using Test.Activities.Automation.ActivityLib.Helpers;
 using Test.Activities.Automation.ActivityLib.Models;
-using Test.Activities.Automation.ActivityLib.Models.Helpers;
+using Test.Activities.Automation.ActivityLib.Sources;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
+using GitLabActivitySource = Test.Activities.Automation.ActivityLib.Sources.GitLabActivitySource;
 
 namespace Test.Activities.Automation.TimerJob
 {
@@ -39,9 +43,27 @@ namespace Test.Activities.Automation.TimerJob
 
                 try
                 {
-                    var activityService = new FetchActivityService(_logger);
+                    var web = SPContext.Current.Web;
 
-                    var activities = activityService.FetchActivities();
+                    _logger?.LogInformation("Fetching activities");
+
+                    var configList = web.Lists[Constants.Lists.Configurations];
+
+                    var spListMentors = web.Lists.TryGetList(Constants.Lists.Mentors);
+                    if (spListMentors == null) throw new Exception("Getting SP mentors list failed");
+
+                    var spListRootMentors = web.Lists.TryGetList(Constants.Lists.RootMentors);
+                    if (spListRootMentors == null) throw new Exception("Getting SP root mentor list failed");
+
+                    SpMember.SetLogger(_logger);
+                    var spMembers = SpMember.GetSpMembers(spListMentors, spListRootMentors);
+
+                    var activitySourceList = new List<ActivitySource>()
+                    {
+                        new GitLabActivitySource(_logger,spMembers,configList),
+                        new SPCalendarActivitySource(_logger,web)
+                    };
+                    var activities = activitySourceList.SelectMany(x => x.FetchActivities());
 
                     await SendActivities(activities);
                 }
@@ -68,9 +90,12 @@ namespace Test.Activities.Automation.TimerJob
 
                 for (var i = 0; i < RequestAttempts; i++)
                 {
-                    if (await APIHelper.PostJsonAsync(uri, str) == HttpStatusCode.OK) return;
+                    using (var response = await APIHelper.PostJsonAsync(uri, str))
+                    {
+                        if (response.IsSuccessStatusCode) return;
 
-                    _logger?.LogWarning($"Request {i} failed");
+                        _logger?.LogWarning($"Request {i} failed. Response='{await response.Content.ReadAsStringAsync()}'");
+                    }
 
                     if (i != RequestAttempts)
                     {
@@ -82,7 +107,7 @@ namespace Test.Activities.Automation.TimerJob
             }
             catch (Exception e)
             {
-                throw new Exception($"Sending activities to service failed. {e.Message}");
+                throw new Exception($"Sending activities to service failed. {e}");
             }
         }
     }

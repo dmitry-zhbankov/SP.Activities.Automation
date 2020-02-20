@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Test.Activities.Automation.ActivityLib.Models
+namespace Test.Activities.Automation.ActivityLib.Sources
 {
     public partial class GitLabActivitySource
     {

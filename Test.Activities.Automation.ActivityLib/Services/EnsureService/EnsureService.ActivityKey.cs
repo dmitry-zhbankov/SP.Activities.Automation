@@ -1,4 +1,4 @@
-﻿namespace Test.Activities.Automation.ActivityLib.Models.Activity.Services
+﻿namespace Test.Activities.Automation.ActivityLib.Services
 {
     public partial class EnsureService
     {
@@ -12,7 +12,7 @@
 
             public override int GetHashCode()
             {
-                return UserId ^ Year ^ Month;
+                return UserId*1000000 + Year*100 + Month;
             }
 
             public override bool Equals(object obj)
