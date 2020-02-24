@@ -58,8 +58,8 @@
 
         public static class Calendar
         {
-            public const string StartTime = "Start Time";
-            public const string EndTime = "End Time";
+            public const string StartTime = "StartDate";
+            public const string EndTime = "EndDate";
             public const string Mentor = "Mentor";
             public const string RootMentor = "Root Mentor";
         }

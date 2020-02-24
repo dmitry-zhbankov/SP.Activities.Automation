@@ -116,7 +116,7 @@ namespace Test.Activities.Automation.ActivityLib.Services
                         Month = x.Key.Month,
                         SpMember = x.Value.SpMember,
                         Paths = new List<string>(x.Value.Paths)
-                    });
+                    }).ToList();
 
                 return itemsToUpdate;
             }

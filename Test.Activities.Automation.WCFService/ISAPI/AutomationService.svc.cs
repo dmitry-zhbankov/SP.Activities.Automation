@@ -5,8 +5,8 @@ using System.ServiceModel.Activation;
 using System.ServiceModel.Web;
 using Microsoft.SharePoint;
 using Test.Activities.Automation.ActivityLib.Models;
+using Test.Activities.Automation.ActivityLib.Services;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
-using EnsureService = Test.Activities.Automation.ActivityLib.Services.EnsureService;
 
 namespace Test.Activities.Automation.WCFService
 {
@@ -58,15 +58,15 @@ namespace Test.Activities.Automation.WCFService
                     var spListRootMentors = web.Lists.TryGetList(Constants.Lists.RootMentors);
                     if (spListRootMentors == null) throw new Exception("Getting SP root mentor list failed");
 
-                    SpActivity.SetLogger(_logger);
-                    var spActivities = SpActivity.GetSpActivities(spListActivities, spListMentors, spListRootMentors, minDate, maxDate);
-
                     SpMember.SetLogger(_logger);
                     var spMembers = SpMember.GetSpMembers(spListMentors, spListRootMentors);
 
+                    SpActivity.SetLogger(_logger);
+                    var spActivities = SpActivity.GetSpActivities(spListActivities, spMembers, minDate, maxDate);
+
                     var ensureService = new EnsureService(_logger);
                     var itemsToUpdate = ensureService.Ensure(spActivities, activities, spMembers);
-                    
+
                     web.AllowUnsafeUpdates = true;
                     SpActivity.UpdateSpActivities(itemsToUpdate, spListActivities);
 

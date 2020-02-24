@@ -49,12 +49,11 @@ namespace Test.Activities.Automation.ActivityLib.Models
             return false;
         }
 
-        public static IEnumerable<SpActivity> GetSpActivities(SPList spListActivities, SPList spListMentors, SPList spListRootMentors, DateTime minDate, DateTime maxDate)
+        public static IEnumerable<SpActivity> GetSpActivities(SPList spListActivities, IEnumerable<SpMember> spMembers, DateTime minDate, DateTime maxDate)
         {
             try
             {
                 _logger?.LogInformation("Getting existing activities from SP");
-
 
                 var spActivities = new List<SpActivity>();
 
@@ -66,12 +65,10 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
                 foreach (var item in spListActivities.GetItems(dateRangeQuery).Cast<SPListItem>())
                 {
-                    var mentor = SPHelper.GetLookUpUserValue(spListMentors, item, Constants.Activity.Mentor, Constants.Activity.Employee);
-                    var mentorValue = SPHelper.GetLookUpItemId(spListMentors, item, Constants.Activity.Mentor,
-                        Constants.Activity.Employee);
+                    var lookupRootMentorId = SPHelper.GetItemLookupId(item, Constants.Calendar.RootMentor);
+                    var lookupMentorId = SPHelper.GetItemLookupId(item, Constants.Calendar.Mentor);
 
-                    var rootMentor = SPHelper.GetLookUpUserValue(spListRootMentors, item, Constants.Activity.RootMentor, Constants.Activity.Employee);
-                    var rootMentorValue = SPHelper.GetLookUpItemId(spListRootMentors, item, Constants.Activity.RootMentor, Constants.Activity.Employee);
+                    var member = spMembers.FirstOrDefault(x => x.UserId == lookupMentorId || x.UserId == lookupRootMentorId);
 
                     var month = SPHelper.GetIntValue(item, Constants.Activity.Month);
                     var year = SPHelper.GetIntValue(item, Constants.Activity.Year);
@@ -79,13 +76,15 @@ namespace Test.Activities.Automation.ActivityLib.Models
                     var activities = SPHelper.GetMultiChoiceValue(item, Constants.Activity.Activities);
                     var paths = SPHelper.GetMultiChoiceValue(item, Constants.Activity.Paths);
 
+                    if (member == null) continue;
+
                     spActivities.Add(new SpActivity
                     {
                         SpMember = new SpMember()
                         {
-                            UserId = (int)(rootMentor?.User.ID ?? mentor?.User.ID),
-                            MentorLookupId = mentorValue,
-                            RootMentorLookupId = rootMentorValue
+                            UserId = member.UserId,
+                            MentorLookupId = member.MentorLookupId,
+                            RootMentorLookupId = member.RootMentorLookupId
                         },
                         Month = month,
                         Year = year,

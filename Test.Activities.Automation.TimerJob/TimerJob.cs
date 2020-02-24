@@ -58,10 +58,11 @@ namespace Test.Activities.Automation.TimerJob
                     SpMember.SetLogger(_logger);
                     var spMembers = SpMember.GetSpMembers(spListMentors, spListRootMentors);
 
+                    var spListMentoringCalendar = web.Lists[Constants.Lists.MentoringCalendar];
                     var activitySourceList = new List<ActivitySource>()
                     {
-                        new GitLabActivitySource(_logger,spMembers,configList),
-                        new SPCalendarActivitySource(_logger,web)
+                        new GitLabActivitySource(_logger, spMembers, configList),
+                        new SPCalendarActivitySource(_logger, spMembers, spListMentoringCalendar)
                     };
                     var activities = activitySourceList.SelectMany(x => x.FetchActivities());
 
@@ -94,7 +95,8 @@ namespace Test.Activities.Automation.TimerJob
                     {
                         if (response.IsSuccessStatusCode) return;
 
-                        _logger?.LogWarning($"Request {i} failed. Response='{await response.Content.ReadAsStringAsync()}'");
+                        _logger?.LogWarning(
+                            $"Request {i} failed. Response='{await response.Content.ReadAsStringAsync()}'");
                     }
 
                     if (i != RequestAttempts)

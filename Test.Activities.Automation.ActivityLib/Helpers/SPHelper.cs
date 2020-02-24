@@ -8,29 +8,29 @@ namespace Test.Activities.Automation.ActivityLib.Helpers
     {
         public static SPFieldUserValue GetLookUpUserValue(SPList originList, SPListItem item, string lookUpField, string originField)
         {
-            var userLookUpField = item.Fields.GetField(lookUpField);
-            SPFieldLookupValue userFieldLookUpValue;
+            var userField = item.Fields.GetField(lookUpField);
+            SPFieldLookupValue userFieldValue;
 
             try
             {
-                userFieldLookUpValue =
-                    userLookUpField.GetFieldValue(item[lookUpField].ToString()) as SPFieldLookupValue;
+                userFieldValue =
+                    userField.GetFieldValue(item[lookUpField].ToString()) as SPFieldLookupValue;
             }
             catch (NullReferenceException)
             {
                 return null;
             }
 
-            var rootMentorField = originList.Fields.GetField(originField);
-            var rootMentorItem = originList.GetItemById(userFieldLookUpValue.LookupId);
+            var lookupField = originList.Fields.GetField(originField);
+            var lookupItem = originList.GetItemById(userFieldValue.LookupId);
 
-            var rootMentorFieldValue =
-                rootMentorField.GetFieldValue(rootMentorItem[originField].ToString()) as SPFieldUserValue;
+            var lookupUserValue =
+                lookupField.GetFieldValue(lookupItem[originField].ToString()) as SPFieldUserValue;
 
-            return rootMentorFieldValue;
+            return lookupUserValue;
         }
 
-        public static int? GetLookUpItemId(SPList originList, SPListItem item, string lookUpField, string originField)
+        public static int? GetItemLookupId(SPList originList, SPListItem item, string lookUpField)
         {
             var userLookUpField = item.Fields.GetField(lookUpField);
             SPFieldLookupValue userFieldLookUpValue;
@@ -45,10 +45,29 @@ namespace Test.Activities.Automation.ActivityLib.Helpers
                 return null;
             }
 
-            var rootMentorItem = originList.GetItemById(userFieldLookUpValue.LookupId);
+            var lookupItem = originList.GetItemById(userFieldLookUpValue.LookupId);
 
-            return rootMentorItem.ID;
+            return lookupItem.ID;
         }
+
+        public static int? GetItemLookupId(SPListItem item, string lookUpField)
+        {
+            var lookupField = item.Fields.GetField(lookUpField);
+            SPFieldLookupValue fieldLookupValue;
+
+            try
+            {
+                fieldLookupValue =
+                    lookupField.GetFieldValue(item[lookUpField].ToString()) as SPFieldLookupValue;
+            }
+            catch (NullReferenceException)
+            {
+                return null;
+            }
+
+            return fieldLookupValue.LookupId;
+        }
+
 
         public static SPFieldUserValue GetUserValue(SPListItem item, string userField)
         {

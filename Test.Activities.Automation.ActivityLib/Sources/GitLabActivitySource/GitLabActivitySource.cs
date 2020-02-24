@@ -12,32 +12,22 @@ namespace Test.Activities.Automation.ActivityLib.Sources
 {
     public partial class GitLabActivitySource : ActivitySource
     {
-        private IEnumerable<Repository> _repositories;
         private IEnumerable<SpMember> _members;
+        private SPList _configList;
 
         public GitLabActivitySource(ILogger logger, IEnumerable<SpMember> members, SPList configList) : base(logger)
         {
             _members = members;
-            Configure(configList);
-        }
-        
-        private new void Configure()
-        {
+            _configList = configList;
         }
 
-        public void Configure(SPList configList)
+        private IEnumerable<Repository> GetConfigRepositories(SPList configList)
         {
             try
             {
-                //using (var site = new SPSite(Constants.Host))
-                //using (var web = site.OpenWeb(Constants.Web))
-                //{
-                //    var configList = web.Lists[Constants.Lists.Configurations];
-                //}
-
                 var configItems = configList.GetItems().Cast<SPListItem>();
 
-                _repositories = configItems.Where(item =>
+                var repositories = configItems.Where(item =>
                          item[Constants.Configuration.Key] as string ==
                          Constants.Configuration.ConfigurationKeys.GitLabRepository)
                     .Select(item => item[Constants.Configuration.Value] as string)
@@ -52,6 +42,8 @@ namespace Test.Activities.Automation.ActivityLib.Sources
                             Paths = new List<string>(str[3].Split(';'))
                         })
                     .ToList();
+
+                return repositories;
             }
             catch (Exception e)
             {
@@ -65,11 +57,11 @@ namespace Test.Activities.Automation.ActivityLib.Sources
 
             try
             {
-                GetRepoCommits();
+                var repos = GetConfigRepositories(_configList);
+                GetRepoCommits(repos);
 
-                var emailActivities = CreateRepoActivities();
-                var activities = emailActivities.Select(x => new ActivityInfo(x, _members));
-
+                var emailActivities = CreateRepoActivities(repos);
+                var activities = emailActivities.Select(x => new ActivityInfo(x, _members)).ToList();
 
                 return activities;
             }
@@ -80,10 +72,10 @@ namespace Test.Activities.Automation.ActivityLib.Sources
             }
         }
 
-        private IEnumerable<ActivityInfoEmail> CreateRepoActivities()
+        private IEnumerable<ActivityInfoEmail> CreateRepoActivities(IEnumerable<Repository> repositories)
         {
             var activities = new List<ActivityInfoEmail>();
-            foreach (var repo in _repositories)
+            foreach (var repo in repositories)
                 foreach (var branch in repo.Branches)
                     activities.AddRange(branch.Commits.Select(commit =>
                         new ActivityInfoEmail
@@ -97,7 +89,7 @@ namespace Test.Activities.Automation.ActivityLib.Sources
             return activities.GroupBy(x => x.UserEmail).Select(x => x.First());
         }
 
-        private void GetRepoCommits()
+        private void GetRepoCommits(IEnumerable<Repository> repositories)
         {
             try
             {
@@ -108,7 +100,7 @@ namespace Test.Activities.Automation.ActivityLib.Sources
                     client.DefaultRequestHeaders.Accept.Add(
                         new MediaTypeWithQualityHeaderValue(Constants.HttpHeader.MediaType.ApplicationJson));
 
-                    foreach (var repo in _repositories)
+                    foreach (var repo in repositories)
                     {
                         try
                         {
@@ -117,7 +109,6 @@ namespace Test.Activities.Automation.ActivityLib.Sources
                             foreach (var branch in branches)
                             {
                                 var commits = GetBranchCommits(client, branch, repo);
-
                                 branch.Commits = commits.ToList();
                             }
 
