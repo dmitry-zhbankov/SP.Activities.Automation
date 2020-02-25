@@ -30,26 +30,6 @@ namespace Test.Activities.Automation.ActivityLib.Helpers
             return lookupUserValue;
         }
 
-        public static int? GetItemLookupId(SPList originList, SPListItem item, string lookUpField)
-        {
-            var userLookUpField = item.Fields.GetField(lookUpField);
-            SPFieldLookupValue userFieldLookUpValue;
-
-            try
-            {
-                userFieldLookUpValue =
-                    userLookUpField.GetFieldValue(item[lookUpField].ToString()) as SPFieldLookupValue;
-            }
-            catch (NullReferenceException)
-            {
-                return null;
-            }
-
-            var lookupItem = originList.GetItemById(userFieldLookUpValue.LookupId);
-
-            return lookupItem.ID;
-        }
-
         public static int? GetItemLookupId(SPListItem item, string lookUpField)
         {
             var lookupField = item.Fields.GetField(lookUpField);
@@ -67,7 +47,6 @@ namespace Test.Activities.Automation.ActivityLib.Helpers
 
             return fieldLookupValue.LookupId;
         }
-
 
         public static SPFieldUserValue GetUserValue(SPListItem item, string userField)
         {

@@ -9,7 +9,6 @@ using Test.Activities.Automation.ActivityLib.Helpers;
 using Test.Activities.Automation.ActivityLib.Models;
 using Test.Activities.Automation.ActivityLib.Sources;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
-using GitLabActivitySource = Test.Activities.Automation.ActivityLib.Sources.GitLabActivitySource;
 
 namespace Test.Activities.Automation.TimerJob
 {
@@ -43,37 +42,39 @@ namespace Test.Activities.Automation.TimerJob
 
                 try
                 {
-                    var web = SPContext.Current.Web;
-
-                    _logger?.LogInformation("Fetching activities");
-
-                    var configList = web.Lists[Constants.Lists.Configurations];
-
-                    var spListMentors = web.Lists.TryGetList(Constants.Lists.Mentors);
-                    if (spListMentors == null) throw new Exception("Getting SP mentors list failed");
-
-                    var spListRootMentors = web.Lists.TryGetList(Constants.Lists.RootMentors);
-                    if (spListRootMentors == null) throw new Exception("Getting SP root mentor list failed");
-
-                    SpMember.SetLogger(_logger);
-                    var spMembers = SpMember.GetSpMembers(spListMentors, spListRootMentors);
-
-                    var spListMentoringCalendar = web.Lists[Constants.Lists.MentoringCalendar];
-                    var activitySourceList = new List<ActivitySource>()
+                    using (var site = new SPSite(Constants.Host))
+                    using (var web = site.OpenWeb(Constants.Web))
                     {
-                        new GitLabActivitySource(_logger, spMembers, configList),
-                        new SPCalendarActivitySource(_logger, spMembers, spListMentoringCalendar)
-                    };
-                    var activities = activitySourceList.SelectMany(x => x.FetchActivities());
+                        _logger?.LogInformation("Fetching activities");
 
-                    await SendActivities(activities);
+                        var configList = web.Lists[Constants.Lists.Configurations];
+
+                        var spListMentors = web.Lists.TryGetList(Constants.Lists.Mentors);
+                        if (spListMentors == null) throw new Exception("Getting SP mentors list failed");
+
+                        var spListRootMentors = web.Lists.TryGetList(Constants.Lists.RootMentors);
+                        if (spListRootMentors == null) throw new Exception("Getting SP root mentor list failed");
+
+                        SpMember.SetLogger(_logger);
+                        var spMembers = SpMember.GetSpMembers(spListMentors, spListRootMentors);
+
+                        var spListMentoringCalendar = web.Lists[Constants.Lists.MentoringCalendar];
+                        var activitySourceList = new List<ActivitySource>()
+                        {
+                            new GitLabActivitySource(_logger, spMembers, configList),
+                            new SPCalendarActivitySource(_logger, spMembers, spListMentoringCalendar)
+                        };
+                        var activities = activitySourceList.SelectMany(x => x.FetchActivities()).ToList();
+
+                        await SendActivities(activities);
+                    }
                 }
                 catch (Exception e)
                 {
                     _logger?.LogError(e.Message);
                 }
 
-                _logger?.LogInformation("Timer has executed");
+                _logger?.LogInformation("Timer has been executed");
             }
             catch
             {

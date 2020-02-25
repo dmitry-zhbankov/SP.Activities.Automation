@@ -30,14 +30,14 @@ namespace Test.Activities.Automation.WCFService
         {
             var statusCode = HttpStatusCode.Accepted;
 
-            var web = SPContext.Current.Web;
-
             try
             {
                 _logger?.LogInformation("Request received");
 
                 try
                 {
+                    var web = SPContext.Current.Web;
+
                     _logger?.LogInformation("Synchronizing activities");
 
                     if (activities == null)
@@ -74,7 +74,7 @@ namespace Test.Activities.Automation.WCFService
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError($"Synchronizing activities failed. {e.Message}");
+                    _logger.LogError($"Synchronizing activities failed. {e}");
 
                     statusCode = HttpStatusCode.InternalServerError;
                 }

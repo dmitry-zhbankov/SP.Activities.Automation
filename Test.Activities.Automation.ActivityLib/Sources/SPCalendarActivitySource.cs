@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.SharePoint;
+using Microsoft.SharePoint.Utilities;
 using Test.Activities.Automation.ActivityLib.Helpers;
 using Test.Activities.Automation.ActivityLib.Models;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
@@ -25,9 +26,22 @@ namespace Test.Activities.Automation.ActivityLib.Sources
         {
             try
             {
+                var strDate = SPUtility.CreateISO8601DateTimeFromSystemDateTime(date);
                 var dateRangeQuery = new SPQuery
                 {
-                    //Query = $"<Where><And><Geq><FieldRef Name=\"{Constants.Calendar.EndTime}\"/><Value Type=\"DateTime\">{date:yyyy-MM-dd}</Value></Geq><Leq><FieldRef Name=\"{Constants.Calendar.StartTime}\"/><Value Type=\"DateTime\">{date:yyyy-MM-dd}</Value></Leq></And></Where>"
+                    Query =
+                        "<Where>" +
+                            "<And>" +
+                                "<Geq>" +
+                                    $"<FieldRef Name=\"{Constants.Calendar.EndTime}\"/>" +
+                                        $"<Value Type=\"DateTime\">{strDate}</Value>" +
+                                "</Geq>" +
+                                "<Leq>" +
+                                    $"<FieldRef Name=\"{Constants.Calendar.StartTime}\"/>" +
+                                        $"<Value Type=\"DateTime\">{strDate}</Value>" +
+                                "</Leq>" +
+                            "</And>" +
+                        "</Where>"
                 };
 
                 var events = _spListMentoringCalendar.GetItems(dateRangeQuery).Cast<SPListItem>().ToList();
@@ -58,46 +72,32 @@ namespace Test.Activities.Automation.ActivityLib.Sources
                     var lookupRootMentorId = SPHelper.GetItemLookupId(item, Constants.Calendar.RootMentor);
                     var lookupMentorId = SPHelper.GetItemLookupId(item, Constants.Calendar.Mentor);
 
-                    //var rootMentor = SPHelper.GetLookUpUserValue(_spListRootMentors, item, Constants.Calendar.RootMentor,
-                    //    Constants.Activity.Employee);
+                    var mentor =
+                        _spMembers.FirstOrDefault(x => x.MentorLookupId == lookupMentorId);
+                    var rootMentor =
+                        _spMembers.FirstOrDefault(x => x.RootMentorLookupId == lookupRootMentorId);
 
-                    var member =
-                        _spMembers.FirstOrDefault(x => x.UserId == lookupMentorId || x.UserId == lookupRootMentorId);
-
-                    if (member == null) continue;
-
-                    if (member.MentorLookupId != null)
+                    if (mentor != null)
                     {
-                        activities.Add(new ActivityInfo()
+                        activities.Add(new ActivityInfo
                         {
-                            UserId = member.UserId,
+                            UserId = mentor.UserId,
                             Activity = Constants.Activity.ActivityType.Mentoring,
                             Date = yesterday,
                             Paths = paths
                         });
                     }
 
-                    if (member.RootMentorLookupId != null)
+                    if (rootMentor != null)
                     {
                         activities.Add(new ActivityInfo
                         {
-                            UserId = member.UserId,
+                            UserId = rootMentor.UserId,
                             Activity = Constants.Activity.ActivityType.RootMentoring,
                             Date = yesterday,
                             Paths = paths
                         });
                     }
-
-                    //var mentor = SPHelper.GetLookUpUserValue(_spListMentors, item, Constants.Calendar.Mentor,
-                    //    Constants.Activity.Employee);
-
-                    //activities.Add(new ActivityInfo
-                    //{
-                    //    UserId = mentor.User.ID,
-                    //    Activity = Constants.Activity.ActivityType.Mentoring,
-                    //    Date = yesterday,
-                    //    Paths = paths
-                    //});
                 }
 
                 return activities;

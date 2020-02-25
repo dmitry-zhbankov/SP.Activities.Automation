@@ -55,7 +55,6 @@ namespace Test.Activities.Automation.ActivityLib.Models
                 foreach (var item in spListMentors.GetItems().Cast<SPListItem>())
                 {
                     var mentor = SPHelper.GetUserValue(item, Constants.Activity.Employee);
-
                     var paths = SPHelper.GetMultiChoiceValue(item, Constants.Activity.Paths);
 
                     members.Add(new SpMember
@@ -69,7 +68,6 @@ namespace Test.Activities.Automation.ActivityLib.Models
                 foreach (var item in spListRootMentors.GetItems().Cast<SPListItem>())
                 {
                     var rootMentor = SPHelper.GetUserValue(item, Constants.Activity.Employee);
-
                     var paths = SPHelper.GetMultiChoiceValue(item, Constants.Activity.Paths);
 
                     var member = members.FirstOrDefault(x => x.UserId == rootMentor.User.ID);

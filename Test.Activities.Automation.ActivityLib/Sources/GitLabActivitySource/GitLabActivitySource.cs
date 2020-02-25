@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using Microsoft.SharePoint;
+using Microsoft.SharePoint.Utilities;
 using Test.Activities.Automation.ActivityLib.Helpers;
 using Test.Activities.Automation.ActivityLib.Models;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
@@ -21,13 +22,23 @@ namespace Test.Activities.Automation.ActivityLib.Sources
             _configList = configList;
         }
 
-        private IEnumerable<Repository> GetConfigRepositories(SPList configList)
+        private static IEnumerable<Repository> GetConfigRepositories(SPList configList)
         {
             try
             {
-                var configItems = configList.GetItems().Cast<SPListItem>();
+                var spQuery = new SPQuery
+                {
+                    Query =
+                        "<Where>" +
+                            "<Eq>" +
+                                $"<FieldRef Name=\"{Constants.Configuration.Key}\"/>" +
+                                    $"<Value Type=\"Text\">{Constants.Configuration.ConfigurationKeys.GitLabRepository}</Value>" +
+                            "</Eq>" +
+                        "</Where>"
+                };
 
-                var repositories = configItems.Where(item =>
+                var repositories = configList.GetItems(spQuery).Cast<SPListItem>()
+                    .Where(item =>
                          item[Constants.Configuration.Key] as string ==
                          Constants.Configuration.ConfigurationKeys.GitLabRepository)
                     .Select(item => item[Constants.Configuration.Value] as string)
@@ -72,7 +83,7 @@ namespace Test.Activities.Automation.ActivityLib.Sources
             }
         }
 
-        private IEnumerable<ActivityInfoEmail> CreateRepoActivities(IEnumerable<Repository> repositories)
+        private static IEnumerable<ActivityInfoEmail> CreateRepoActivities(IEnumerable<Repository> repositories)
         {
             var activities = new List<ActivityInfoEmail>();
             foreach (var repo in repositories)
@@ -127,7 +138,7 @@ namespace Test.Activities.Automation.ActivityLib.Sources
             }
         }
 
-        private IEnumerable<Commit> GetBranchCommits(HttpClient client, Branch branch, Repository repo)
+        private static IEnumerable<Commit> GetBranchCommits(HttpClient client, Branch branch, Repository repo)
         {
             try
             {
@@ -136,8 +147,8 @@ namespace Test.Activities.Automation.ActivityLib.Sources
                     {
                         $"{repo.Host}{Constants.GitLab.Api}/{repo.ProjectId}/{Constants.GitLab.Commits}",
                         $"?{Constants.GitLab.Branch}{branch.Name}",
-                        $"&{Constants.GitLab.Since}{DateTime.Now.AddDays(-1).Date:yyyy-MM-dd}",
-                        $"&{Constants.GitLab.Until}{DateTime.Now.Date:yyyy-MM-dd}"
+                        $"&{Constants.GitLab.Since}{SPUtility.CreateISO8601DateTimeFromSystemDateTime(DateTime.Now.AddDays(-1).Date)}",
+                        $"&{Constants.GitLab.Until}{SPUtility.CreateISO8601DateTimeFromSystemDateTime(DateTime.Now.Date)}"
                     }
                 );
 
@@ -149,7 +160,7 @@ namespace Test.Activities.Automation.ActivityLib.Sources
             }
         }
 
-        private IEnumerable<Branch> GetBranches(HttpClient client, Repository repo)
+        private static IEnumerable<Branch> GetBranches(HttpClient client, Repository repo)
         {
             try
             {

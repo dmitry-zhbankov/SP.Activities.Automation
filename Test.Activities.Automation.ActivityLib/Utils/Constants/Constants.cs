@@ -15,6 +15,7 @@
             public const string Activities = "Activities";
             public const string Employee = "Employee";
             public const string Paths = "Paths";
+            public const string Date = "Date";
 
             public static class ActivityType
             {
@@ -58,7 +59,7 @@
 
         public static class Calendar
         {
-            public const string StartTime = "StartDate";
+            public const string StartTime = "EventDate";
             public const string EndTime = "EndDate";
             public const string Mentor = "Mentor";
             public const string RootMentor = "Root Mentor";

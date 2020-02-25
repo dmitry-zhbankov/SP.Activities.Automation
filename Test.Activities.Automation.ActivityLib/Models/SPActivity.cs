@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.SharePoint;
+using Microsoft.SharePoint.Utilities;
 using Test.Activities.Automation.ActivityLib.Helpers;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
@@ -23,7 +24,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
         public List<string> Paths { get; set; }
 
-        public bool IsNew => SpActivityId == 0;
+        public bool IsNew => SpActivityId == default;
 
         public static void SetLogger(ILogger logger)
         {
@@ -57,18 +58,31 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
                 var spActivities = new List<SpActivity>();
 
+                var strMinDate = SPUtility.CreateISO8601DateTimeFromSystemDateTime(minDate);
+                var strMaxDate = SPUtility.CreateISO8601DateTimeFromSystemDateTime(maxDate);
                 var dateRangeQuery = new SPQuery
                 {
                     Query =
-                        $"<Where><And><Geq><FieldRef Name=\"Date\"/><Value Type=\"DateTime\">{minDate:yyyy-MM-dd}</Value></Geq><Leq><FieldRef Name=\"Date\"/><Value Type=\"DateTime\">{maxDate:yyyy-MM-dd}</Value></Leq></And></Where>"
+                        "<Where>" +
+                            "<And>" +
+                                "<Geq>" +
+                                    $"<FieldRef Name=\"{Constants.Activity.Date}\"/>" +
+                                        $"<Value Type=\"DateTime\">{strMinDate}</Value>" +
+                                "</Geq>" +
+                                "<Leq>" +
+                                    $"<FieldRef Name=\"{Constants.Activity.Date}\"/>" +
+                                        $"<Value Type=\"DateTime\">{strMaxDate}</Value>" +
+                                "</Leq>" +
+                            "</And>" +
+                        "</Where>"
                 };
 
                 foreach (var item in spListActivities.GetItems(dateRangeQuery).Cast<SPListItem>())
                 {
-                    var lookupRootMentorId = SPHelper.GetItemLookupId(item, Constants.Calendar.RootMentor);
-                    var lookupMentorId = SPHelper.GetItemLookupId(item, Constants.Calendar.Mentor);
+                    var rootMentorLookupId = SPHelper.GetItemLookupId(item, Constants.Calendar.RootMentor);
+                    var mentorLookupId = SPHelper.GetItemLookupId(item, Constants.Calendar.Mentor);
 
-                    var member = spMembers.FirstOrDefault(x => x.UserId == lookupMentorId || x.UserId == lookupRootMentorId);
+                    var member = spMembers.FirstOrDefault(x => x.MentorLookupId == mentorLookupId && x.RootMentorLookupId == rootMentorLookupId);
 
                     var month = SPHelper.GetIntValue(item, Constants.Activity.Month);
                     var year = SPHelper.GetIntValue(item, Constants.Activity.Year);
@@ -80,17 +94,12 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
                     spActivities.Add(new SpActivity
                     {
-                        SpMember = new SpMember()
-                        {
-                            UserId = member.UserId,
-                            MentorLookupId = member.MentorLookupId,
-                            RootMentorLookupId = member.RootMentorLookupId
-                        },
+                        SpMember = member,
                         Month = month,
                         Year = year,
                         Activities = new List<string>(activities),
                         Paths = new List<string>(paths),
-                        SpActivityId = item.ID,
+                        SpActivityId = item.ID
                     });
                 }
 
