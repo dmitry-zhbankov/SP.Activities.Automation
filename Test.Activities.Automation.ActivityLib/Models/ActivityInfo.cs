@@ -8,6 +8,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
     [DataContract]
     public class ActivityInfo
     {
+        [DataMember]
         public int UserId { get; set; }
 
         [DataMember]
@@ -15,7 +16,8 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
         [DataMember]
         public string Activity { get; set; }
-
+        
+        [DataMember]
         public IEnumerable<string> Paths { get; set; }
 
         public ActivityInfo()

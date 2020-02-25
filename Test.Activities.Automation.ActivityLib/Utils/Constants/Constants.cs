@@ -2,7 +2,7 @@
 {
     public static class Constants
     {
-        public const string ServiceUrl = @"http://localhost/_vti_bin/AutomationService.svc/FillActivities";
+        public const string ServiceUrl = @"http://localhost/projects2/_vti_bin/AutomationService.svc/FillActivities";
         public const string Host = "http://localhost";
         public const string Web = "Projects2";
 

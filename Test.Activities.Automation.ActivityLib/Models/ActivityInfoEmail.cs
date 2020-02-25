@@ -17,6 +17,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
         [DataMember]
         public string Activity { get; set; }
 
+        [DataMember]
         public IEnumerable<string> Paths { get; set; }
 
         public override int GetHashCode()
