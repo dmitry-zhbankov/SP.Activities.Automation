@@ -14,31 +14,31 @@ namespace Test.Activities.Automation.ActivityLib.Tests.Services.EnsureService
         {
             var ensureService = new ActivityLib.Services.EnsureService(null);
             
-            var members = new List<SpMember>()
+            var members = new List<SPMember>()
             {
-                new SpMember()
+                new SPMember()
                 {
                     UserId = 1,
                     MentorLookupId = 1,
                 },
-                new SpMember()
+                new SPMember()
                 {
                     UserId = 2,
                     RootMentorLookupId = 2,
                     MentorLookupId = 2,
                 },
-                new SpMember()
+                new SPMember()
                 {
                     UserId = 3,
                     RootMentorLookupId = 3,
                 },
             };
 
-            var spActivities = new List<SpActivity>()
+            var spActivities = new List<SPActivity>()
             {
-                new SpActivity()
+                new SPActivity()
                 {
-                    SpMember = members[0],
+                    SPMember = members[0],
                     Activities = new List<string>()
                     {
                         "Mentoring"
@@ -51,9 +51,9 @@ namespace Test.Activities.Automation.ActivityLib.Tests.Services.EnsureService
                         "Path 2",
                     }
                 },
-                new SpActivity()
+                new SPActivity()
                 {
-                    SpMember = members[1],
+                    SPMember = members[1],
                     Activities = new List<string>()
                     {
                         "Mentoring",
@@ -66,9 +66,9 @@ namespace Test.Activities.Automation.ActivityLib.Tests.Services.EnsureService
                         "Path 3",
                     }
                 },
-                new SpActivity()
+                new SPActivity()
                 {
-                    SpMember = members[1],
+                    SPMember = members[1],
                     Activities = new List<string>()
                     {
                         "Development"
@@ -118,11 +118,11 @@ namespace Test.Activities.Automation.ActivityLib.Tests.Services.EnsureService
 
             var actualSpActivities = ensureService.Ensure(spActivities, activities, members);
 
-            var expectedSpActivite = new List<SpActivity>()
+            var expectedSpActivite = new List<SPActivity>()
             {
-                new SpActivity()
+                new SPActivity()
                 {
-                    SpMember = members[0],
+                    SPMember = members[0],
                     Activities = new List<string>()
                     {
                         "Development",
@@ -137,9 +137,9 @@ namespace Test.Activities.Automation.ActivityLib.Tests.Services.EnsureService
                         "Path 3",
                     }
                 },
-                new SpActivity()
+                new SPActivity()
                 {
-                    SpMember = members[1],
+                    SPMember = members[1],
                     Activities = new List<string>()
                     {
                         "Development"
@@ -152,9 +152,9 @@ namespace Test.Activities.Automation.ActivityLib.Tests.Services.EnsureService
                         "Path 4",
                     }
                 },
-                new SpActivity()
+                new SPActivity()
                 {
-                    SpMember = members[2],
+                    SPMember = members[2],
                     Activities = new List<string>()
                     {
                         "Development"

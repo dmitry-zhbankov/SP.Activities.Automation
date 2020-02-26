@@ -14,7 +14,7 @@ namespace Test.Activities.Automation.ActivityLib.Services
             _logger = logger;
         }
 
-        public IEnumerable<SpActivity> Ensure(IEnumerable<SpActivity> spActivities, IEnumerable<ActivityInfo> activities, IEnumerable<SpMember> members)
+        public IEnumerable<SPActivity> Ensure(IEnumerable<SPActivity> spActivities, IEnumerable<ActivityInfo> activities, IEnumerable<SPMember> members)
         {
             try
             {
@@ -28,13 +28,13 @@ namespace Test.Activities.Automation.ActivityLib.Services
                 }
 
                 var itemsToUpdate = dict.Where(x => x.Value.IsModified)
-                    .Select(x => new SpActivity()
+                    .Select(x => new SPActivity()
                     {
-                        SpActivityId = x.Value.ActivityId,
+                        SPActivityId = x.Value.ActivityId,
                         Activities = new List<string>(x.Value.Activities),
                         Year = x.Key.Year,
                         Month = x.Key.Month,
-                        SpMember = x.Value.SpMember,
+                        SPMember = x.Value.SPMember,
                         Paths = new List<string>(x.Value.Paths)
                     }).ToList();
 
@@ -46,7 +46,7 @@ namespace Test.Activities.Automation.ActivityLib.Services
             }
         }
 
-        private void UpdateDictionary(IDictionary<ActivityKey, ActivityValue> dict, ActivityInfo activity, IEnumerable<SpMember> members)
+        private void UpdateDictionary(IDictionary<ActivityKey, ActivityValue> dict, ActivityInfo activity, IEnumerable<SPMember> members)
         {
             var key = new ActivityKey()
             {
@@ -64,7 +64,7 @@ namespace Test.Activities.Automation.ActivityLib.Services
                     dict[key].IsModified = true;
                 }
 
-                var set = new HashSet<string>(activity.Paths);
+                var set = new SortedSet<string>(activity.Paths);
                 set.ExceptWith(value.Paths);
 
                 if (set.Count == 0) return;
@@ -91,7 +91,7 @@ namespace Test.Activities.Automation.ActivityLib.Services
                         activity.Activity
                     },
                     Paths = new SortedSet<string>(activity.Paths),
-                    SpMember = newMember,
+                    SPMember = newMember,
                     IsModified = true
                 };
 
@@ -99,7 +99,7 @@ namespace Test.Activities.Automation.ActivityLib.Services
             }
         }
 
-        private IDictionary<ActivityKey, ActivityValue> InitDictionary(IEnumerable<SpActivity> spActivities)
+        private IDictionary<ActivityKey, ActivityValue> InitDictionary(IEnumerable<SPActivity> spActivities)
         {
             var dict = new Dictionary<ActivityKey, ActivityValue>();
 
@@ -107,17 +107,17 @@ namespace Test.Activities.Automation.ActivityLib.Services
             {
                 var key = new ActivityKey()
                 {
-                    UserId = spActivity.SpMember.UserId,
+                    UserId = spActivity.SPMember.UserId,
                     Year = spActivity.Year,
                     Month = spActivity.Month
                 };
 
                 var value = new ActivityValue()
                 {
-                    ActivityId = spActivity.SpActivityId,
+                    ActivityId = spActivity.SPActivityId,
                     Activities = new SortedSet<string>(spActivity.Activities),
                     Paths = new SortedSet<string>(spActivity.Paths),
-                    SpMember = spActivity.SpMember
+                    SPMember = spActivity.SPMember
                 };
 
                 dict.Add(key, value);

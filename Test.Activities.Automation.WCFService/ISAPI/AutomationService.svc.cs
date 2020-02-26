@@ -6,7 +6,7 @@ using System.ServiceModel.Web;
 using Microsoft.SharePoint;
 using Test.Activities.Automation.ActivityLib.Models;
 using Test.Activities.Automation.ActivityLib.Services;
-using Test.Activities.Automation.ActivityLib.Utils.Constants;
+using SPMember = Test.Activities.Automation.ActivityLib.Models.SPMember;
 
 namespace Test.Activities.Automation.WCFService
 {
@@ -36,8 +36,6 @@ namespace Test.Activities.Automation.WCFService
 
                 try
                 {
-                    var web = SPContext.Current.Web;
-
                     _logger?.LogInformation("Synchronizing activities");
 
                     if (activities == null)
@@ -45,30 +43,32 @@ namespace Test.Activities.Automation.WCFService
                         throw new Exception("Activities are null");
                     }
 
+                    var web = SPContext.Current.Web;
+
+                    _logger?.LogInformation("Getting existing members from SP");
+                    var spMembers = SPMember.GetSPMembers(web);
+
                     var now = DateTime.Now;
                     var minDate = new DateTime(now.Year, now.AddMonths(-1).Month, 1);
                     var maxDate = now.Date;
 
-                    var spListActivities = web.Lists.TryGetList(Constants.Lists.Activities);
-                    if (spListActivities == null) throw new Exception("Getting SP activity list failed");
-
-                    var spListMentors = web.Lists.TryGetList(Constants.Lists.Mentors);
-                    if (spListMentors == null) throw new Exception("Getting SP mentors list failed");
-
-                    var spListRootMentors = web.Lists.TryGetList(Constants.Lists.RootMentors);
-                    if (spListRootMentors == null) throw new Exception("Getting SP root mentor list failed");
-
-                    SpMember.SetLogger(_logger);
-                    var spMembers = SpMember.GetSpMembers(spListMentors, spListRootMentors);
-
-                    SpActivity.SetLogger(_logger);
-                    var spActivities = SpActivity.GetSpActivities(spListActivities, spMembers, minDate, maxDate);
+                    _logger?.LogInformation("Getting existing activities from SP");
+                    var spActivities = SPActivity.GetSPActivities(web, spMembers, minDate, maxDate);
 
                     var ensureService = new EnsureService(_logger);
                     var itemsToUpdate = ensureService.Ensure(spActivities, activities, spMembers);
 
-                    web.AllowUnsafeUpdates = true;
-                    SpActivity.UpdateSpActivities(itemsToUpdate, spListActivities);
+                    var propAllowUpdates = web.AllowUnsafeUpdates;
+                    try
+                    {
+                        _logger?.LogInformation("Updating SP activities list");
+                        web.AllowUnsafeUpdates = true;
+                        SPActivity.UpdateSPActivities(itemsToUpdate, web);
+                    }
+                    finally
+                    {
+                        web.AllowUnsafeUpdates = propAllowUpdates;
+                    }
 
                     _logger.LogInformation("Request has been treated successfully");
                 }

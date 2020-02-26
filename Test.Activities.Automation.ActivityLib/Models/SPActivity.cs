@@ -8,13 +8,11 @@ using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
 namespace Test.Activities.Automation.ActivityLib.Models
 {
-    public class SpActivity
+    public class SPActivity
     {
-        private static ILogger _logger;
+        public int SPActivityId { get; set; }
 
-        public int SpActivityId { get; set; }
-
-        public SpMember SpMember { get; set; }
+        public SPMember SPMember { get; set; }
 
         public int Year { get; set; }
 
@@ -24,23 +22,18 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
         public List<string> Paths { get; set; }
 
-        public bool IsNew => SpActivityId == default;
-
-        public static void SetLogger(ILogger logger)
-        {
-            _logger = logger;
-        }
+        public bool IsNew => SPActivityId == default;
 
         public override int GetHashCode()
         {
-            return SpActivityId;
+            return SPActivityId;
         }
 
         public override bool Equals(object obj)
         {
-            if (obj is SpActivity otherObj)
+            if (obj is SPActivity otherObj)
             {
-                return SpMember.Equals(otherObj.SpMember) &&
+                return SPMember.Equals(otherObj.SPMember) &&
                        Year == otherObj.Year &&
                        Month == otherObj.Month &&
                        (Paths == null && otherObj.Paths == null || Paths.SequenceEqual(otherObj.Paths)) &&
@@ -50,13 +43,12 @@ namespace Test.Activities.Automation.ActivityLib.Models
             return false;
         }
 
-        public static IEnumerable<SpActivity> GetSpActivities(SPList spListActivities, IEnumerable<SpMember> spMembers, DateTime minDate, DateTime maxDate)
+        public static IEnumerable<SPActivity> GetSPActivities(SPWeb web, IEnumerable<SPMember> spMembers, DateTime minDate, DateTime maxDate)
         {
             try
             {
-                _logger?.LogInformation("Getting existing activities from SP");
-
-                var spActivities = new List<SpActivity>();
+                var spListActivities = web.Lists.TryGetList(Constants.Lists.Activities);
+                if (spListActivities == null) throw new Exception("Getting SP activity list failed");
 
                 var strMinDate = SPUtility.CreateISO8601DateTimeFromSystemDateTime(minDate);
                 var strMaxDate = SPUtility.CreateISO8601DateTimeFromSystemDateTime(maxDate);
@@ -77,6 +69,8 @@ namespace Test.Activities.Automation.ActivityLib.Models
                         "</Where>"
                 };
 
+                var spActivities = new List<SPActivity>();
+
                 foreach (var item in spListActivities.GetItems(dateRangeQuery).Cast<SPListItem>())
                 {
                     var rootMentorLookupId = SPHelper.GetItemLookupId(item, Constants.Calendar.RootMentor);
@@ -92,14 +86,14 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
                     if (member == null) continue;
 
-                    spActivities.Add(new SpActivity
+                    spActivities.Add(new SPActivity
                     {
-                        SpMember = member,
+                        SPMember = member,
                         Month = month,
                         Year = year,
                         Activities = new List<string>(activities),
                         Paths = new List<string>(paths),
-                        SpActivityId = item.ID
+                        SPActivityId = item.ID
                     });
                 }
 
@@ -111,13 +105,12 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
         }
 
-        public static void UpdateSpActivities(IEnumerable<SpActivity> itemsToUpdate, SPList spListActivities)
+        public static void UpdateSPActivities(IEnumerable<SPActivity> itemsToUpdate, SPWeb web)
         {
             try
             {
-                _logger?.LogInformation("Updating SP activities list");
-
-                if (spListActivities == null) throw new Exception("Getting SP list failed");
+                var spListActivities = web.Lists.TryGetList(Constants.Lists.Activities);
+                if (spListActivities == null) throw new Exception("Getting SP activity list failed");
 
                 foreach (var item in itemsToUpdate)
                 {
@@ -137,12 +130,12 @@ namespace Test.Activities.Automation.ActivityLib.Models
             }
         }
 
-        public static void InsertSPActivity(SPList spList, SpActivity item)
+        public static void InsertSPActivity(SPList spList, SPActivity item)
         {
             var newItem = spList.Items.Add();
 
-            newItem[Constants.Activity.Mentor] = item.SpMember.MentorLookupId;
-            newItem[Constants.Activity.RootMentor] = item.SpMember.RootMentorLookupId;
+            newItem[Constants.Activity.Mentor] = item.SPMember.MentorLookupId;
+            newItem[Constants.Activity.RootMentor] = item.SPMember.RootMentorLookupId;
             newItem[Constants.Activity.Month] = item.Month;
             newItem[Constants.Activity.Year] = item.Year;
 
@@ -152,9 +145,9 @@ namespace Test.Activities.Automation.ActivityLib.Models
             newItem.Update();
         }
 
-        public static void UpdateSPActivity(SPList spList, SpActivity item)
+        public static void UpdateSPActivity(SPList spList, SPActivity item)
         {
-            var itemToUpdate = spList.Items.GetItemById(item.SpActivityId);
+            var itemToUpdate = spList.Items.GetItemById(item.SPActivityId);
 
             SPHelper.SetMultiChoiceValue(itemToUpdate, Constants.Activity.Activities, item.Activities);
             SPHelper.SetMultiChoiceValue(itemToUpdate, Constants.Activity.Paths, item.Paths);

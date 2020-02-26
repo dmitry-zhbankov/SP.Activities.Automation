@@ -6,26 +6,30 @@ using Microsoft.SharePoint.Utilities;
 using Test.Activities.Automation.ActivityLib.Helpers;
 using Test.Activities.Automation.ActivityLib.Models;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
+using SPMember = Test.Activities.Automation.ActivityLib.Models.SPMember;
 
 namespace Test.Activities.Automation.ActivityLib.Sources
 {
     public class SPCalendarActivitySource : ActivitySource
     {
         private ILogger _logger;
-        private IEnumerable<SpMember> _spMembers;
-        private SPList _spListMentoringCalendar;
+        private IEnumerable<SPMember> _spMembers;
+        private SPWeb _web;
 
-        public SPCalendarActivitySource(ILogger logger, IEnumerable<SpMember> spMembers, SPList spListMentoringCalendar) : base(logger)
+        public SPCalendarActivitySource(ILogger logger, IEnumerable<SPMember> spMembers, SPWeb web) : base(logger)
         {
             _logger = logger;
             _spMembers = spMembers;
-            _spListMentoringCalendar = spListMentoringCalendar;
+            _web = web;
         }
 
         public IEnumerable<SPListItem> GetCalendarItems(DateTime date)
         {
             try
             {
+                var spListMentoringCalendar = _web.Lists.TryGetList(Constants.Lists.MentoringCalendar);
+                if (spListMentoringCalendar == null) throw new Exception("Getting SP activity list failed");
+
                 var strDate = SPUtility.CreateISO8601DateTimeFromSystemDateTime(date);
                 var dateRangeQuery = new SPQuery
                 {
@@ -44,7 +48,7 @@ namespace Test.Activities.Automation.ActivityLib.Sources
                         "</Where>"
                 };
 
-                var events = _spListMentoringCalendar.GetItems(dateRangeQuery).Cast<SPListItem>().ToList();
+                var events = spListMentoringCalendar.GetItems(dateRangeQuery).Cast<SPListItem>().ToList();
                 return events;
             }
             catch (Exception e)

@@ -24,7 +24,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
         {
         }
 
-        public ActivityInfo(ActivityInfoEmail activityInfoEmail, IEnumerable<SpMember> members)
+        public ActivityInfo(ActivityInfoEmail activityInfoEmail, IEnumerable<SPMember> members)
         {
             UserId = GetUserIdByEmail(activityInfoEmail.UserEmail, members);
             Date = activityInfoEmail.Date;
@@ -50,7 +50,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
             return false;
         }
 
-        private static int GetUserIdByEmail(string email, IEnumerable<SpMember> members)
+        private static int GetUserIdByEmail(string email, IEnumerable<SPMember> members)
         {
             var user = members.FirstOrDefault(x => x.UserEmail == email);
 

@@ -7,10 +7,8 @@ using Test.Activities.Automation.ActivityLib.Utils.Constants;
 
 namespace Test.Activities.Automation.ActivityLib.Models
 {
-    public class SpMember
+    public class SPMember
     {
-        private static ILogger _logger;
-
         public int UserId { get; set; }
 
         public string UserEmail { get; set; }
@@ -28,7 +26,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
 
         public override bool Equals(object obj)
         {
-            if (obj is SpMember otherObj)
+            if (obj is SPMember otherObj)
             {
                 return UserId == otherObj.UserId &&
                        MentorLookupId == otherObj.MentorLookupId &&
@@ -39,25 +37,24 @@ namespace Test.Activities.Automation.ActivityLib.Models
             return false;
         }
 
-        public static void SetLogger(ILogger logger)
-        {
-            _logger = logger;
-        }
-
-        public static IEnumerable<SpMember> GetSpMembers(SPList spListMentors, SPList spListRootMentors)
+        public static IEnumerable<SPMember> GetSPMembers(SPWeb web)
         {
             try
             {
-                _logger?.LogInformation("Getting existing members from SP");
+                var spListMentors = web.Lists.TryGetList(Constants.Lists.Mentors);
+                if (spListMentors == null) throw new Exception("Getting SP mentors list failed");
 
-                var members = new List<SpMember>();
+                var spListRootMentors = web.Lists.TryGetList(Constants.Lists.RootMentors);
+                if (spListRootMentors == null) throw new Exception("Getting SP root mentor list failed");
+
+                var members = new List<SPMember>();
 
                 foreach (var item in spListMentors.GetItems().Cast<SPListItem>())
                 {
                     var mentor = SPHelper.GetUserValue(item, Constants.Activity.Employee);
                     var paths = SPHelper.GetMultiChoiceValue(item, Constants.Activity.Paths);
 
-                    members.Add(new SpMember
+                    members.Add(new SPMember
                     {
                         UserId = mentor.User.ID,
                         MentorLookupId = item.ID,
@@ -78,7 +75,7 @@ namespace Test.Activities.Automation.ActivityLib.Models
                     }
                     else
                     {
-                        members.Add(new SpMember
+                        members.Add(new SPMember
                         {
                             UserId = rootMentor.User.ID,
                             RootMentorLookupId = item.ID,

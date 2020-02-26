@@ -8,18 +8,19 @@ using Microsoft.SharePoint.Utilities;
 using Test.Activities.Automation.ActivityLib.Helpers;
 using Test.Activities.Automation.ActivityLib.Models;
 using Test.Activities.Automation.ActivityLib.Utils.Constants;
+using SPMember = Test.Activities.Automation.ActivityLib.Models.SPMember;
 
 namespace Test.Activities.Automation.ActivityLib.Sources
 {
     public partial class GitLabActivitySource : ActivitySource
     {
-        private IEnumerable<SpMember> _members;
-        private SPList _configList;
+        private IEnumerable<SPMember> _members;
+        private SPWeb _web;
 
-        public GitLabActivitySource(ILogger logger, IEnumerable<SpMember> members, SPList configList) : base(logger)
+        public GitLabActivitySource(ILogger logger, IEnumerable<SPMember> members, SPWeb web) : base(logger)
         {
             _members = members;
-            _configList = configList;
+            _web = web;
         }
 
         private static IEnumerable<Repository> GetConfigRepositories(SPList configList)
@@ -68,7 +69,10 @@ namespace Test.Activities.Automation.ActivityLib.Sources
 
             try
             {
-                var repos = GetConfigRepositories(_configList);
+                var configList = _web.Lists[Constants.Lists.Configurations];
+                if (configList == null) throw new Exception("Getting SP config list failed");
+
+                var repos = GetConfigRepositories(configList);
                 GetRepoCommits(repos);
 
                 var emailActivities = CreateRepoActivities(repos);

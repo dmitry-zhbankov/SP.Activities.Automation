@@ -9,7 +9,7 @@ namespace Test.Activities.Automation.ActivityLib.Services
         {
             public int ActivityId { get; set; }
 
-            public SpMember SpMember { get; set; }
+            public SPMember SPMember { get; set; }
 
             public SortedSet<string> Paths { get; set; }
 
